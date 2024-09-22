@@ -23,17 +23,20 @@ struct blocked {};
 template<class TSocket>
 class tcp_stream
 {
+public:
+  typedef std::shared_ptr<TSocket> socket_pointer;
+
 private:
   bool _is_open;
 
 public:
-  tcp_stream(std::shared_ptr<TSocket> socket) noexcept
+  tcp_stream(socket_pointer socket) noexcept
     : _is_open(true),
       socket(socket)
   {
   }
 
-  std::shared_ptr<TSocket> socket;
+  socket_pointer socket;
 
   bool is_open() const noexcept { return _is_open; }
 
