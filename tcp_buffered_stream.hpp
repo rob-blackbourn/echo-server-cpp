@@ -27,9 +27,9 @@ public:
   {
   }
 
-  bool can_read() const noexcept { return !_read_queue.empty(); }
+  bool has_reads() const noexcept { return !_read_queue.empty(); }
 
-  std::vector<char> read() noexcept
+  std::vector<char> deque_read() noexcept
   {
     auto buf { std::move(_read_queue.front()) };
     _read_queue.pop_front();

@@ -31,9 +31,9 @@ int main(int argc, char** argv)
     {
       std::cout << "Client read: " << fd << std::endl;
 
-      while (stream->can_read())
+      while (stream->has_reads())
       {
-        auto buf = stream->read();
+        auto buf = stream->deque_read();
         for (auto& [other_fd, other_stream] : streams)
         {
           if (other_fd != fd)

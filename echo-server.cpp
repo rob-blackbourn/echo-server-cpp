@@ -33,9 +33,9 @@ main(int argc, char** argv)
     {
       std::cout << "on_read: " << fd << std::endl;
 
-      while (stream->can_read())
+      while (stream->has_reads())
       {
-        stream->enqueue_write(stream->read());
+        stream->enqueue_write(stream->deque_read());
       }
     },
     [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
