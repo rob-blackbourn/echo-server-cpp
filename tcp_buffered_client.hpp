@@ -69,7 +69,7 @@ public:
           _read_queue.push_back(std::move(buf));
           return is_open();
         }
-        
+
       },
       tcp_client::read(read_bufsiz));
     }
@@ -85,11 +85,13 @@ public:
 
   bool write()
   {
-    bool can_write = true;
-    while (can_write && is_open() && !_write_queue.empty()) {
+    bool can_write = is_open() && !_write_queue.empty();
+    while (can_write) {
+
       auto& [orig_buf, offset] = _write_queue.front();
       std::size_t count = std::min(orig_buf.size() - offset, write_bufsiz);
       const auto& buf = std::span<char>(orig_buf).subspan(offset, count);
+
       can_write = std::visit(match {
         
         [](eof&&)
@@ -112,8 +114,9 @@ public:
             // queue.
             _write_queue.pop_front();
           }
-          return true;
+          return is_open() && !_write_queue.empty();
         }
+        
       },
       tcp_client::write(buf));
     }
