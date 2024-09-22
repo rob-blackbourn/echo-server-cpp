@@ -1,21 +1,6 @@
-#include <netdb.h>
-#include <poll.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <cerrno>
-#include <cstring>
 #include <iostream>
-#include <map>
-#include <memory>
-#include <utility>
 
-#include "match.hpp"
 #include "tcp.hpp"
-#include "utils.hpp"
 
 int main(int argc, char** argv)
 {
