@@ -32,6 +32,8 @@ public:
   {
   }
 
+  tcp_socket(const tcp_socket&) = delete;
+
   ~tcp_socket() noexcept
   {
     if (!_is_open)
