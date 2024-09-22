@@ -80,7 +80,7 @@ public:
 
   void enqueue_write(std::vector<char> buf)
   {
-    _write_queue.push_back(std::move(std::make_pair(std::move(buf), 0)));
+    _write_queue.push_back(std::make_pair(std::move(buf), 0));
   }
 
   bool write()

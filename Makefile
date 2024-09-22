@@ -1,5 +1,5 @@
 CXX = clang++
-CXXFLAGS = -g -std=c++23
+CXXFLAGS = -g -std=c++23 -Wall
 
 .PHONEY: default
 default: all

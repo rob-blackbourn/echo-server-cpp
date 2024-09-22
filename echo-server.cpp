@@ -35,7 +35,7 @@ main(int argc, char** argv)
 
       while (!client->is_read_queue_empty())
       {
-        client->enqueue_write(std::move(client->dequeue_read()));
+        client->enqueue_write(client->dequeue_read());
       }
     },
     [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
