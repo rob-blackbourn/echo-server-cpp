@@ -1,8 +1,22 @@
-#ifndef __chat_server_hpp
-#define __chat_server_hpp
+#include <netdb.h>
+#include <poll.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
-#include "tcp_buffered_client.hpp"
+#include <cerrno>
+#include <cstring>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <utility>
+
+#include "match.hpp"
+#include "tcp.hpp"
 #include "tcp_server.hpp"
+#include "stream_out.hpp"
 
 class chat_server : public tcp_server<tcp_buffered_client>
 {
@@ -31,4 +45,13 @@ public:
   }
 };
 
-#endif // __chat_server_hpp
+int
+main(int argc, char** argv)
+{
+  const uint16_t port = 22000;
+
+  auto server = chat_server(port);
+  server.event_loop();
+
+  return 0;
+}

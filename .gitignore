@@ -1,2 +1,3 @@
 *.o
-server
+chat-server
+echo-server
