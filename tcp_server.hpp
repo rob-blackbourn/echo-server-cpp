@@ -20,18 +20,19 @@ public:
   typedef tcp_buffered_client client_type;
   typedef std::shared_ptr<client_type> client_pointer;
   typedef std::map<int, client_pointer> client_map;
+  typedef std::function<void(int, const client_pointer&, const client_map&)> client_callback;
   
 private:
   std::map<int, client_pointer> _clients;
   tcp_listener<tcp_buffered_client> _listener;
-  const std::function<void(int, const client_pointer&, const client_map&)>& _on_accept;
-  const std::function<void(int, const client_pointer&, const client_map&)>& _on_read;
+  const client_callback& _on_accept;
+  const client_callback& _on_read;
 
 public:
   tcp_server(
     uint16_t port,
-    const std::function<void(int, const client_pointer&, const client_map&)>& on_accept,
-    const std::function<void(int, const client_pointer&, const client_map&)>& on_read)
+    const client_callback& on_accept,
+    const client_callback& on_read)
     : _on_accept(on_accept),
       _on_read(on_read)
   {
