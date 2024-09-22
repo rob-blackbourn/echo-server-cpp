@@ -15,6 +15,7 @@ class tcp_socket
 {
 protected:
   int _fd;
+  bool _is_open { true };
 
 public:
   explicit tcp_socket()
@@ -33,6 +34,11 @@ public:
 
   tcp_socket(const tcp_socket&) = delete;
 
+  int fd() const noexcept { return _fd; }
+
+  bool is_open() const noexcept { return _is_open; }
+  void is_open(bool value) { _is_open = value; }
+  
   void close()
   {
     int result = ::close(_fd);
@@ -41,8 +47,6 @@ public:
         errno, std::generic_category(), "failed to close socket");
     }
   }
-
-  int fd() const noexcept { return _fd; }
 
   int fcntl_flags() const
   {

@@ -38,7 +38,7 @@ public:
 
   bool enqueue_reads()
   {
-    bool ok = tcp_stream<TSocket>::is_open();
+    bool ok = tcp_stream<TSocket>::socket->is_open();
     while (ok) {
       ok = std::visit(match {
         
@@ -55,13 +55,13 @@ public:
         [&](std::vector<char>&& buf) mutable
         {
           _read_queue.push_back(std::move(buf));
-          return tcp_stream<TSocket>::is_open();
+          return tcp_stream<TSocket>::socket->is_open();
         }
 
       },
       tcp_stream<TSocket>::read(read_bufsiz));
     }
-    return tcp_stream<TSocket>::is_open();
+    return tcp_stream<TSocket>::socket->is_open();
   }
 
   bool has_writes() const noexcept { return !_write_queue.empty(); }
@@ -73,7 +73,7 @@ public:
 
   bool write_enqueued()
   {
-    bool has_writes = tcp_stream<TSocket>::is_open() && !_write_queue.empty();
+    bool has_writes = tcp_stream<TSocket>::socket->is_open() && !_write_queue.empty();
     while (has_writes) {
 
       auto& [orig_buf, offset] = _write_queue.front();
@@ -102,14 +102,14 @@ public:
             // queue.
             _write_queue.pop_front();
           }
-          return tcp_stream<TSocket>::is_open() && !_write_queue.empty();
+          return tcp_stream<TSocket>::socket->is_open() && !_write_queue.empty();
         }
         
       },
       tcp_stream<TSocket>::write(buf));
     }
 
-    return tcp_stream<TSocket>::is_open();
+    return tcp_stream<TSocket>::socket->is_open();
   }
 };
 

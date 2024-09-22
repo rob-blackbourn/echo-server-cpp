@@ -26,19 +26,13 @@ class tcp_stream
 public:
   typedef std::shared_ptr<TSocket> socket_pointer;
 
-private:
-  bool _is_open;
-
 public:
   tcp_stream(socket_pointer socket) noexcept
-    : _is_open(true),
-      socket(socket)
+    : socket(socket)
   {
   }
 
   socket_pointer socket;
-
-  bool is_open() const noexcept { return _is_open; }
 
   std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
   {
@@ -48,7 +42,7 @@ public:
       // Check if it's flow control.
       if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
         // Not a flow control error; the socket has faulted.
-        _is_open = false;
+        socket->is_open(false);
         throw std::system_error(
           errno, std::generic_category(), "client socket failed to read");
       }
@@ -59,7 +53,7 @@ public:
 
     if (result == 0) {
       // A read of zero bytes indicates socket has closed.
-      _is_open = false;
+      socket->is_open(false);
       return eof {};
     }
 
@@ -76,7 +70,7 @@ public:
       // Check if it's flow control.
       if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
         // Not flow control; the socket has faulted.
-        _is_open = false;
+        socket->is_open(false);
         throw std::system_error(
           errno, std::generic_category(), "client socket failed to write");
       }
@@ -88,7 +82,7 @@ public:
     if (result == 0)
     {
       // A write of zero bytes indicates socket has closed.
-      _is_open = false;
+      socket->is_open(false);
       return eof {};
     }
 
