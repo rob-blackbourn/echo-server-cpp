@@ -1,5 +1,5 @@
-#ifndef __jetblack__utils__stream_out_hpp
-#define __jetblack__utils__stream_out_hpp
+#ifndef __utils_hpp
+#define __utils_hpp
 
 #include <deque>
 #include <iostream>
@@ -59,4 +59,4 @@ inline std::ostream& operator << (std::ostream& os, bool b)
     return os << (b ? "<true>" : "<false>");
 }
 
-#endif // __jetblack__utils__stream_out_hpp
+#endif // __utils_hpp
