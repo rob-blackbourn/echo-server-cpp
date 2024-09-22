@@ -6,6 +6,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <optional>
 #include <utility>
 
 #include "tcp_socket.hpp"
@@ -25,14 +26,14 @@ public:
 private:
   std::map<int, client_pointer> _clients;
   tcp_listener<tcp_buffered_client> _listener;
-  const client_callback& _on_accept;
-  const client_callback& _on_read;
+  std::optional<client_callback> _on_accept;
+  std::optional<client_callback> _on_read;
 
 public:
   tcp_server(
     uint16_t port,
-    const client_callback& on_accept,
-    const client_callback& on_read)
+    const std::optional<client_callback> on_accept,
+    const std::optional<client_callback> on_read)
     : _on_accept(on_accept),
       _on_read(on_read)
   {
@@ -111,14 +112,20 @@ private:
     );
     client->blocking(false);
     _clients[client->fd()] = client;
-    _on_accept(client->fd(), client, _clients);
+    if (_on_accept.has_value())
+    {
+      _on_accept.value()(client->fd(), client, _clients);
+    }
   }
 
   bool handle_read(int fd)
   {
     auto& client = _clients[fd];
     bool is_open = client->enqueue_reads();
-    _on_read(fd, client, _clients);
+    if (_on_read.has_value())
+    {
+      _on_read.value()(fd, client, _clients);
+    }
     return is_open;
   }
 

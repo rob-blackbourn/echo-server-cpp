@@ -5,10 +5,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "(gdb) Launch",
+            "name": "echo-server",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/server",
+            "program": "${workspaceFolder}/echo-server",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
