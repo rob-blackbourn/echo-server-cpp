@@ -1,0 +1,12 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "cppStandard": "c++23",
+            "intelliSenseMode": "linux-clang-x64",
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c23"
+        }
+    ],
+    "version": 4
+}

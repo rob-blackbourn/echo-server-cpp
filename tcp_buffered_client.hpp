@@ -1,0 +1,113 @@
+#ifndef __tcp_buffered_client_hpp
+#define __tcp_buffered_client_hpp
+
+#include <deque>
+#include <optional>
+
+#include "match.hpp"
+#include "tcp_client.hpp"
+
+struct tcp_buffered_client : public tcp_client
+{
+  const std::size_t read_bufsiz;
+  std::deque<std::vector<char>> read_queue;
+
+  const std::size_t write_bufsiz;
+  std::deque<std::pair<std::vector<char>, std::size_t>> write_queue;
+
+  tcp_buffered_client(
+    int fd,
+    const std::string& address,
+    uint16_t port,
+    std::size_t read_bufsiz,
+    std::size_t write_bufsiz)
+    : tcp_client(fd, address, port),
+      read_bufsiz(read_bufsiz),
+      write_bufsiz(write_bufsiz)
+  {
+  }
+
+  bool can_write() const { return !write_queue.empty(); }
+
+  std::optional<std::vector<char>> read() noexcept
+  {
+    if (read_queue.empty())
+      return std::nullopt;
+
+    auto buf = read_queue.front();
+    read_queue.pop_front();
+    return buf;
+  }
+
+  bool enqueue_reads()
+  {
+    bool ok = is_open();
+    while (ok) {
+      ok = std::visit(match {
+        
+        [](blocked&&)
+        {
+          return false;
+        },
+
+        [](eof&&)
+        {
+          return false;
+        },
+
+        [&](std::vector<char>&& buf) mutable
+        {
+          read_queue.push_back(std::move(buf));
+          return is_open();
+        }
+      },
+      tcp_client::read(read_bufsiz));
+    }
+    return is_open();
+  }
+
+  void enqueue_write(std::vector<char> buf)
+  {
+    write_queue.push_back(std::move(std::make_pair(std::move(buf), 0)));
+  }
+
+  bool write()
+  {
+    bool can_write = true;
+    while (can_write && is_open() && !write_queue.empty()) {
+      auto& [orig_buf, offset] = write_queue.front();
+      std::size_t count = std::min(orig_buf.size() - offset, write_bufsiz);
+      const auto& buf = std::span<char>(orig_buf).subspan(offset, count);
+      can_write = std::visit(match {
+        
+        [](eof&&)
+        {
+          return false;
+        },
+
+        [](blocked&&)
+        {
+          return false;
+        },
+
+        [&](ssize_t&& bytes_written) mutable
+        {
+          // Update the offset reference by the number of bytes written.
+          offset += bytes_written;
+          // Are we there yet?
+          if (offset == orig_buf.size()) {
+            // The buffer has been completely used. Remove it from the
+            // queue.
+            write_queue.pop_front();
+          }
+          return true;
+        }
+      },
+      tcp_client::write(buf));
+    }
+
+    return is_open();
+  }
+};
+
+#endif // __tcp_buffered_client_hpp
