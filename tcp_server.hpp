@@ -32,8 +32,8 @@ private:
 public:
   tcp_server(
     uint16_t port,
-    const std::optional<client_callback> on_accept,
-    const std::optional<client_callback> on_read)
+    const std::optional<client_callback> on_accept = std::nullopt,
+    const std::optional<client_callback> on_read = std::nullopt)
     : _on_accept(on_accept),
       _on_read(on_read)
   {
