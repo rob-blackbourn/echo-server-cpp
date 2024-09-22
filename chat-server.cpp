@@ -15,7 +15,6 @@
 
 #include "match.hpp"
 #include "tcp.hpp"
-#include "tcp_server.hpp"
 #include "utils.hpp"
 
 int main(int argc, char** argv)
@@ -24,21 +23,21 @@ int main(int argc, char** argv)
 
   auto server = tcp_server(
     port,
-    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
+    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
     {
       std::cout << "Client accept: " << fd << std::endl;
     },
-    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
+    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
     {
       std::cout << "Client read: " << fd << std::endl;
 
-      while (client->can_read())
+      while (stream->can_read())
       {
-        auto buf = client->read();
-        for (auto& [other_fd, other_client] : clients)
+        auto buf = stream->read();
+        for (auto& [other_fd, other_stream] : streams)
         {
           if (other_fd != fd)
-            other_client->enqueue_write(buf);
+            other_stream->enqueue_write(buf);
         }
       }
 

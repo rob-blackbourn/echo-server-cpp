@@ -1,12 +1,13 @@
-#ifndef __tcp_buffered_client_hpp
-#define __tcp_buffered_client_hpp
+#ifndef __tcp_buffered_stream_hpp
+#define __tcp_buffered_stream_hpp
 
 #include <deque>
 
 #include "match.hpp"
-#include "tcp_client.hpp"
+#include "tcp_stream.hpp"
 
-class tcp_buffered_client : public tcp_client
+template<class TSocket>
+class tcp_buffered_stream : public tcp_stream<TSocket>
 {
 private:
   std::deque<std::vector<char>> _read_queue;
@@ -16,13 +17,11 @@ public:
   const std::size_t read_bufsiz;
   const std::size_t write_bufsiz;
 
-  tcp_buffered_client(
-    int fd,
-    const std::string& address,
-    uint16_t port,
+  tcp_buffered_stream(
+    std::shared_ptr<TSocket> socket,
     std::size_t read_bufsiz,
     std::size_t write_bufsiz)
-    : tcp_client(fd, address, port),
+    : tcp_stream<TSocket>(socket),
       read_bufsiz(read_bufsiz),
       write_bufsiz(write_bufsiz)
   {
@@ -39,7 +38,7 @@ public:
 
   bool enqueue_reads()
   {
-    bool ok = is_open();
+    bool ok = tcp_stream<TSocket>::is_open();
     while (ok) {
       ok = std::visit(match {
         
@@ -56,16 +55,16 @@ public:
         [&](std::vector<char>&& buf) mutable
         {
           _read_queue.push_back(std::move(buf));
-          return is_open();
+          return tcp_stream<TSocket>::is_open();
         }
 
       },
-      tcp_client::read(read_bufsiz));
+      tcp_stream<TSocket>::read(read_bufsiz));
     }
-    return is_open();
+    return tcp_stream<TSocket>::is_open();
   }
 
-  bool can_write() const noexcept { return !_write_queue.empty(); }
+  bool has_writes() const noexcept { return !_write_queue.empty(); }
 
   void enqueue_write(std::vector<char> buf)
   {
@@ -74,14 +73,14 @@ public:
 
   bool write_enqueued()
   {
-    bool can_write = is_open() && !_write_queue.empty();
-    while (can_write) {
+    bool has_writes = tcp_stream<TSocket>::is_open() && !_write_queue.empty();
+    while (has_writes) {
 
       auto& [orig_buf, offset] = _write_queue.front();
       std::size_t count = std::min(orig_buf.size() - offset, write_bufsiz);
       const auto& buf = std::span<char>(orig_buf).subspan(offset, count);
 
-      can_write = std::visit(match {
+      has_writes = std::visit(match {
         
         [](eof&&)
         {
@@ -103,15 +102,15 @@ public:
             // queue.
             _write_queue.pop_front();
           }
-          return is_open() && !_write_queue.empty();
+          return tcp_stream<TSocket>::is_open() && !_write_queue.empty();
         }
         
       },
-      tcp_client::write(buf));
+      tcp_stream<TSocket>::write(buf));
     }
 
-    return is_open();
+    return tcp_stream<TSocket>::is_open();
   }
 };
 
-#endif // __tcp_buffered_client_hpp
+#endif // __tcp_buffered_stream_hpp

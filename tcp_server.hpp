@@ -13,29 +13,29 @@
 #include "tcp_client.hpp"
 #include "tcp_listener.hpp"
 
-#include "tcp_buffered_client.hpp"
+#include "tcp_buffered_stream.hpp"
 
 class tcp_server
 {
 public:
-  typedef tcp_buffered_client client_type;
-  typedef std::shared_ptr<client_type> client_pointer;
-  typedef std::map<int, client_pointer> client_map;
-  typedef std::function<void(int, const client_pointer&, const client_map&)> client_callback;
+  typedef tcp_buffered_stream<tcp_client> stream_type;
+  typedef std::shared_ptr<stream_type> stream_pointer;
+  typedef std::map<int, stream_pointer> stream_map;
+  typedef std::function<void(int, const stream_pointer&, const stream_map&)> stream_callback;
   
 private:
-  std::map<int, client_pointer> _clients;
-  tcp_listener<tcp_buffered_client> _listener;
-  std::optional<client_callback> _on_open;
-  std::optional<client_callback> _on_read;
-  std::optional<client_callback> _on_close;
+  std::map<int, stream_pointer> _streams;
+  tcp_listener<tcp_client> _listener;
+  std::optional<stream_callback> _on_open;
+  std::optional<stream_callback> _on_read;
+  std::optional<stream_callback> _on_close;
 
 public:
   tcp_server(
     uint16_t port,
-    const std::optional<client_callback> on_open = std::nullopt,
-    const std::optional<client_callback> on_read = std::nullopt,
-    const std::optional<client_callback> on_close = std::nullopt)
+    const std::optional<stream_callback> on_open = std::nullopt,
+    const std::optional<stream_callback> on_read = std::nullopt,
+    const std::optional<stream_callback> on_close = std::nullopt)
     : _on_open(on_open),
       _on_read(on_read),
       _on_close(on_close)
@@ -88,11 +88,16 @@ private:
   {
     std::vector<pollfd> fds;
 
+    // Add read for the listener in order to detect new connections.
     fds.push_back(pollfd{_listener.fd(), POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL, 0});
-    for (auto& [client_fd, client] : _clients)
+
+    for (auto& [client_fd, stream] : _streams)
     {
+      // We are interested in all incoming data.
       int16_t flags = POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL;
-      if (!client->can_write())
+
+      // We are interested in writes when we have data to write.
+      if (!stream->has_writes())
           flags |= POLLOUT;
 
       fds.push_back(pollfd{client_fd, flags, 0});
@@ -117,26 +122,27 @@ private:
     auto client = _listener.accept(
       [](int fd, const std::string& addr, uint16_t port)
       {
-        return std::make_shared<tcp_buffered_client>(fd, addr, port, 8096, 8096);
+        return std::make_shared<tcp_client>(fd, addr, port);
       }
     );
     client->blocking(false);
-    _clients[client->fd()] = client;
+    auto stream = std::make_shared<tcp_buffered_stream<tcp_client>>(client, 8096, 8096);
+    _streams[client->fd()] = stream;
     if (_on_open.has_value())
     {
-      _on_open.value()(client->fd(), client, _clients);
+      _on_open.value()(client->fd(), stream, _streams);
     }
   }
 
   bool handle_read(int fd)
   {
-    auto& client = _clients[fd];
+    auto& stream = _streams[fd];
     try
     {
-      bool is_open = client->enqueue_reads();
+      bool is_open = stream->enqueue_reads();
       if (_on_read.has_value())
       {
-        _on_read.value()(fd, client, _clients);
+        _on_read.value()(fd, stream, _streams);
       }
       return is_open;
     }
@@ -152,7 +158,7 @@ private:
   {
     try
     {
-      return _clients[fd]->write_enqueued();
+      return _streams[fd]->write_enqueued();
     }
     catch(const std::exception& e)
     {
@@ -163,13 +169,13 @@ private:
 
   void handle_close(int fd)
   {
-    auto client = _clients[fd];
+    auto stream = _streams[fd];
 
-    _clients.erase(fd);
+    _streams.erase(fd);
     
     if (_on_close.has_value())
     {
-      _on_close.value()(fd, client, _clients);
+      _on_close.value()(fd, stream, _streams);
     }
   }
 
@@ -194,7 +200,7 @@ private:
       {
         // The read detected a close. 
         handle_close(poll_state.fd);
-        // No further events can be handled.
+        // No further events can be handled for a closed stream.
         return;
       }
     }
@@ -206,7 +212,7 @@ private:
       {
         // The write detected a close.
         handle_close(poll_state.fd);
-        // No further events can be handled.
+        // No further events can be handled for a closed stream.
         return;
       }
     }

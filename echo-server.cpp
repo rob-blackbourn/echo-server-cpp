@@ -25,20 +25,20 @@ main(int argc, char** argv)
 
   auto server = tcp_server(
     port,
-    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
+    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
     {
       std::cout << "on_open: " << fd << std::endl;
     },
-    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
+    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
     {
       std::cout << "on_read: " << fd << std::endl;
 
-      while (client->can_read())
+      while (stream->can_read())
       {
-        client->enqueue_write(client->read());
+        stream->enqueue_write(stream->read());
       }
     },
-    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
+    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
     {
       std::cout << "on_close: " << fd << std::endl;
     });
