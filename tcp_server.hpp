@@ -63,17 +63,16 @@ public:
         {
           if (poll_state.revents == 0)
           {
-            // no events for file descriptor.
-            continue;
+            continue; // no events for file descriptor.
           }
-
-          --active_fd_count;
 
           handle_event(poll_state);
 
-          if (active_fd_count == 0)
+          if (--active_fd_count == 0)
             break;
         }
+
+        remove_closed_streams();
       }
     }
     catch(const std::exception& e)
@@ -104,6 +103,24 @@ private:
     }
 
     return fds;
+  }
+
+  void remove_closed_streams()
+  {
+    std::vector<int> closed_fds;
+    
+    for (auto& [fd, stream] : _streams)
+    {
+      if (!stream->socket->is_open())
+      {
+        closed_fds.push_back(fd);
+      }
+    }
+
+    for (auto fd : closed_fds)
+    {
+      _streams.erase(fd);
+    }
   }
 
   int poll(std::vector<pollfd> &fds)
