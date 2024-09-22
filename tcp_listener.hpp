@@ -20,6 +20,10 @@ template<class TClient = tcp_client>
 class tcp_listener : public tcp_socket
 {
 public:
+  typedef std::shared_ptr<TClient> client_pointer;
+  typedef std::function<client_pointer(int fd, const std::string& address, uint16_t port)> accept_callback;
+
+public:
   tcp_listener()
     : tcp_socket()
   {
@@ -68,7 +72,7 @@ public:
     }
   }
 
-  std::shared_ptr<TClient> accept(const std::function<std::shared_ptr<TClient>(int fd, const std::string& address, uint16_t port)>& make_client)
+  client_pointer accept(const accept_callback& make_client)
   {
     sockaddr_in clientaddr;
     socklen_t clientlen = sizeof(clientaddr);
