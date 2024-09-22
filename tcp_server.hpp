@@ -16,17 +16,22 @@
 
 class tcp_server
 {
+public:
+  typedef tcp_buffered_client client_type;
+  typedef std::shared_ptr<client_type> client_pointer;
+  typedef std::map<int, client_pointer> client_map;
+  
 private:
-  std::map<int, std::shared_ptr<tcp_buffered_client>> _clients;
+  std::map<int, client_pointer> _clients;
   tcp_listener<tcp_buffered_client> _listener;
-  const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& _on_accept;
-  const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& _on_read;
+  const std::function<void(int, const client_pointer&, const client_map&)>& _on_accept;
+  const std::function<void(int, const client_pointer&, const client_map&)>& _on_read;
 
 public:
   tcp_server(
     uint16_t port,
-    const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& on_accept,
-    const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& on_read)
+    const std::function<void(int, const client_pointer&, const client_map&)>& on_accept,
+    const std::function<void(int, const client_pointer&, const client_map&)>& on_read)
     : _on_accept(on_accept),
       _on_read(on_read)
   {

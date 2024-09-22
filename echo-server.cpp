@@ -25,11 +25,11 @@ main(int argc, char** argv)
 
   auto server = tcp_server(
     port,
-    [](int fd, const std::shared_ptr<tcp_buffered_client>& client, const std::map<int, std::shared_ptr<tcp_buffered_client>>& clients)
+    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
     {
       std::cout << "Client accept: " << fd << std::endl;
     },
-    [](int fd, const std::shared_ptr<tcp_buffered_client>& client, const std::map<int, std::shared_ptr<tcp_buffered_client>>& clients)
+    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
     {
       std::cout << "Client read: " << fd << std::endl;
 
