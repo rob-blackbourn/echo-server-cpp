@@ -26,16 +26,19 @@ public:
 private:
   std::map<int, client_pointer> _clients;
   tcp_listener<tcp_buffered_client> _listener;
-  std::optional<client_callback> _on_accept;
+  std::optional<client_callback> _on_open;
   std::optional<client_callback> _on_read;
+  std::optional<client_callback> _on_close;
 
 public:
   tcp_server(
     uint16_t port,
-    const std::optional<client_callback> on_accept = std::nullopt,
-    const std::optional<client_callback> on_read = std::nullopt)
-    : _on_accept(on_accept),
-      _on_read(on_read)
+    const std::optional<client_callback> on_open = std::nullopt,
+    const std::optional<client_callback> on_read = std::nullopt,
+    const std::optional<client_callback> on_close = std::nullopt)
+    : _on_open(on_open),
+      _on_read(on_read),
+      _on_close(on_close)
   {
     _listener.bind(port);
     _listener.blocking(false);
@@ -58,8 +61,15 @@ public:
 
         for (const auto& poll_state : fds)
         {
-          if (handle_event(poll_state))
-            --active_fd_count;
+          if (poll_state.revents == 0)
+          {
+            // no events for file descriptor.
+            continue;
+          }
+
+          --active_fd_count;
+
+          handle_event(poll_state);
 
           if (active_fd_count == 0)
             break;
@@ -112,75 +122,94 @@ private:
     );
     client->blocking(false);
     _clients[client->fd()] = client;
-    if (_on_accept.has_value())
+    if (_on_open.has_value())
     {
-      _on_accept.value()(client->fd(), client, _clients);
+      _on_open.value()(client->fd(), client, _clients);
     }
   }
 
   bool handle_read(int fd)
   {
     auto& client = _clients[fd];
-    bool is_open = client->enqueue_reads();
-    if (_on_read.has_value())
+    try
     {
-      _on_read.value()(fd, client, _clients);
+      bool is_open = client->enqueue_reads();
+      if (_on_read.has_value())
+      {
+        _on_read.value()(fd, client, _clients);
+      }
+      return is_open;
     }
-    return is_open;
+    catch(const std::exception& e)
+    {
+      std::cerr << "read failed - " << e.what() << '\n';
+      handle_close(fd);
+      return false;
+    }    
   }
 
-  bool handle_event(const pollfd& poll_state)
+  bool handle_write(int fd)
   {
-    if (poll_state.revents == 0)
+    try
     {
-      // no events for file descriptor.
+      return _clients[fd]->write();
+    }
+    catch(const std::exception& e)
+    {
+      std::cerr << "write failed - " << e.what() << '\n';
       return false;
     }
+  }
 
+  void handle_close(int fd)
+  {
+    auto client = _clients[fd];
+
+    _clients.erase(fd);
+    
+    if (_on_close.has_value())
+    {
+      _on_close.value()(fd, client, _clients);
+    }
+  }
+
+  void handle_event(const pollfd& poll_state)
+  {
     if ((poll_state.revents & POLLIN) == POLLIN)
     {
-      // Read event.
+      // Read events.
+
+      // Listener read.
       if (poll_state.fd == _listener.fd())
       {
+        // A read on a listening socket indicates a client can be accepted.
         handle_accept();
-        return true;
+        // No further processing is necessary.
+        return;
       }
 
-      try
+      // Client read.
+      bool is_open = handle_read(poll_state.fd);
+      if (!is_open)
       {
-        // Client read
-        bool is_open = handle_read(poll_state.fd);
-        if (!is_open)
-        {
-          _clients.erase(poll_state.fd);
-          return true;
-        }
-      }
-      catch(const std::exception& e)
-      {
-        std::cerr << "failed to handle client read - " << e.what() << '\n';
+        // The read detected a close. 
+        handle_close(poll_state.fd);
+        // No further events can be handled.
+        return;
       }
     }
 
     if ((poll_state.revents & POLLOUT) == POLLOUT)
     {
-      try
+      bool is_open = handle_write(poll_state.fd);
+      if (!is_open)
       {
-        // Client write
-        bool is_open = _clients[poll_state.fd]->write();
-        if (!is_open)
-        {
-          _clients.erase(poll_state.fd);
-          return true;
-        }
-      }
-      catch(const std::exception& e)
-      {
-        std::cerr << "failed to handle client write - " << e.what() << '\n';
+        // The write detected a close.
+        handle_close(poll_state.fd);
+        // No further events can be handled.
+        return;
       }
     }
-
-    return true;
   }
 
 };

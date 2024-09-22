@@ -27,17 +27,20 @@ main(int argc, char** argv)
     port,
     [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
     {
-      std::cout << "Client accept: " << fd << std::endl;
+      std::cout << "on_open: " << fd << std::endl;
     },
     [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
     {
-      std::cout << "Client read: " << fd << std::endl;
+      std::cout << "on_read: " << fd << std::endl;
 
       while (!client->is_read_queue_empty())
       {
         client->enqueue_write(std::move(client->dequeue_read()));
       }
-
+    },
+    [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)
+    {
+      std::cout << "on_close: " << fd << std::endl;
     });
   server.event_loop();
 
