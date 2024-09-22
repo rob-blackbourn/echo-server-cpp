@@ -18,39 +18,31 @@
 #include "tcp_server.hpp"
 #include "stream_out.hpp"
 
-class chat_server : public tcp_server<tcp_buffered_client>
+int main(int argc, char** argv)
 {
-public:
-  chat_server(uint16_t port)
-    : tcp_server(port)
-  {
-  }
+  const uint16_t port = 22000;
 
-  std::shared_ptr<tcp_buffered_client> on_accept(int fd, const std::string& addr, uint16_t port) override
-  {
-    return std::make_shared<tcp_buffered_client>(fd, addr, port, 8096, 8096);
-  }
+  auto server = tcp_server(
+    port,
+    [](int fd, const std::shared_ptr<tcp_buffered_client>& client, const std::map<int, std::shared_ptr<tcp_buffered_client>>& clients)
+    {
+      std::cout << "Client accept: " << fd << std::endl;
+    },
+    [](int fd, const std::shared_ptr<tcp_buffered_client>& client, const std::map<int, std::shared_ptr<tcp_buffered_client>>& clients)
+    {
+      std::cout << "Client read: " << fd << std::endl;
 
-  void on_read(int fd, const std::shared_ptr<tcp_buffered_client>& client) override
-  {
       while (!client->is_read_queue_empty())
       {
         auto buf = client->dequeue_read();
-        for (auto& [other_fd, other_client] : clients())
+        for (auto& [other_fd, other_client] : clients)
         {
           if (other_fd != fd)
             other_client->enqueue_write(buf);
         }
       }
-  }
-};
 
-int
-main(int argc, char** argv)
-{
-  const uint16_t port = 22000;
-
-  auto server = chat_server(port);
+    });
   server.event_loop();
 
   return 0;

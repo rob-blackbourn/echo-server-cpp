@@ -14,15 +14,21 @@
 
 #include "tcp_buffered_client.hpp"
 
-template<class TClient = tcp_buffered_client>
 class tcp_server
 {
 private:
-  std::map<int, std::shared_ptr<TClient>> _clients;
-  tcp_listener<TClient> _listener;
+  std::map<int, std::shared_ptr<tcp_buffered_client>> _clients;
+  tcp_listener<tcp_buffered_client> _listener;
+  const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& _on_accept;
+  const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& _on_read;
 
 public:
-  tcp_server(uint16_t port)
+  tcp_server(
+    uint16_t port,
+    const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& on_accept,
+    const std::function<void(int, const std::shared_ptr<tcp_buffered_client>&, const std::map<int, std::shared_ptr<tcp_buffered_client>>&)>& on_read)
+    : _on_accept(on_accept),
+      _on_read(on_read)
   {
     _listener.bind(port);
     _listener.blocking(false);
@@ -59,12 +65,6 @@ public:
     }
   }
 
-  virtual std::shared_ptr<TClient> on_accept(int fd, const std::string& addr, uint16_t port) = 0;
-
-  virtual void on_read(int fd, const std::shared_ptr<TClient>& client) = 0;
-
-  const std::map<int, std::shared_ptr<TClient>>& clients() const noexcept { return _clients; }
-
 private:
 
   std::vector<pollfd> make_poll_fds()
@@ -98,20 +98,21 @@ private:
   void handle_accept()
   {
     auto client = _listener.accept(
-      [this](int fd, const std::string& addr, uint16_t port)
+      [](int fd, const std::string& addr, uint16_t port)
       {
-        return this->on_accept(fd, addr, port);
+        return std::make_shared<tcp_buffered_client>(fd, addr, port, 8096, 8096);
       }
     );
     client->blocking(false);
     _clients[client->fd()] = client;
+    _on_accept(client->fd(), client, _clients);
   }
 
   bool handle_read(int fd)
   {
     auto& client = _clients[fd];
     bool is_open = client->enqueue_reads();
-    on_read(fd, client);
+    _on_read(fd, client, _clients);
     return is_open;
   }
 
