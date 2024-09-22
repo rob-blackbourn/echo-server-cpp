@@ -33,10 +33,9 @@ public:
 
   void on_read(int fd, const std::shared_ptr<tcp_buffered_client>& client) override
   {
-      while (!client->read_queue.empty())
+      while (!client->is_read_queue_empty())
       {
-        client->enqueue_write(std::move(client->read_queue.front()));
-        client->read_queue.pop_front();
+        client->enqueue_write(std::move(client->dequeue_read()));
       }
   }
 };

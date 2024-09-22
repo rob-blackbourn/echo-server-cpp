@@ -75,7 +75,7 @@ private:
     for (auto& [client_fd, client] : _clients)
     {
       int16_t flags = POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL;
-      if (!client->write_queue.empty())
+      if (!client->is_write_queue_empty())
           flags |= POLLOUT;
 
       fds.push_back(pollfd{client_fd, flags, 0});
