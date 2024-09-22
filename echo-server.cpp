@@ -33,9 +33,9 @@ main(int argc, char** argv)
     {
       std::cout << "on_read: " << fd << std::endl;
 
-      while (!client->is_read_queue_empty())
+      while (client->can_read())
       {
-        client->enqueue_write(client->dequeue_read());
+        client->enqueue_write(client->read());
       }
     },
     [](int fd, const tcp_server::client_pointer& client, const tcp_server::client_map& clients)

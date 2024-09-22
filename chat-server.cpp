@@ -32,9 +32,9 @@ int main(int argc, char** argv)
     {
       std::cout << "Client read: " << fd << std::endl;
 
-      while (!client->is_read_queue_empty())
+      while (client->can_read())
       {
-        auto buf = client->dequeue_read();
+        auto buf = client->read();
         for (auto& [other_fd, other_client] : clients)
         {
           if (other_fd != fd)

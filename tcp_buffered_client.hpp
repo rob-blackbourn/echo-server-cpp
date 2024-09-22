@@ -2,7 +2,6 @@
 #define __tcp_buffered_client_hpp
 
 #include <deque>
-#include <optional>
 
 #include "match.hpp"
 #include "tcp_client.hpp"
@@ -29,21 +28,11 @@ public:
   {
   }
 
-  bool is_read_queue_empty() const noexcept { return _read_queue.empty(); }
+  bool can_read() const noexcept { return !_read_queue.empty(); }
 
-  std::vector<char> dequeue_read() noexcept
+  std::vector<char> read() noexcept
   {
     auto buf { std::move(_read_queue.front()) };
-    _read_queue.pop_front();
-    return buf;
-  }
-
-  std::optional<std::vector<char>> read() noexcept
-  {
-    if (_read_queue.empty())
-      return std::nullopt;
-
-    auto buf = _read_queue.front();
     _read_queue.pop_front();
     return buf;
   }
@@ -76,14 +65,14 @@ public:
     return is_open();
   }
 
-  bool is_write_queue_empty() const noexcept { return _write_queue.empty(); }
+  bool can_write() const noexcept { return !_write_queue.empty(); }
 
   void enqueue_write(std::vector<char> buf)
   {
     _write_queue.push_back(std::make_pair(std::move(buf), 0));
   }
 
-  bool write()
+  bool write_enqueued()
   {
     bool can_write = is_open() && !_write_queue.empty();
     while (can_write) {

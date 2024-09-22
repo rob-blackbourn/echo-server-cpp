@@ -92,7 +92,7 @@ private:
     for (auto& [client_fd, client] : _clients)
     {
       int16_t flags = POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL;
-      if (!client->is_write_queue_empty())
+      if (!client->can_write())
           flags |= POLLOUT;
 
       fds.push_back(pollfd{client_fd, flags, 0});
@@ -152,7 +152,7 @@ private:
   {
     try
     {
-      return _clients[fd]->write();
+      return _clients[fd]->write_enqueued();
     }
     catch(const std::exception& e)
     {
