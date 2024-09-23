@@ -21,24 +21,28 @@ public:
   typedef tcp_buffered_stream<tcp_client> stream_type;
   typedef std::shared_ptr<stream_type> stream_pointer;
   typedef std::map<int, stream_pointer> stream_map;
-  typedef std::function<void(int, const stream_pointer&, const stream_map&)> stream_callback;
+  typedef std::function<void(int, const stream_pointer&, const stream_map&)> stream_connection;
+  typedef std::function<void(int, const stream_pointer&, const stream_map&, std::optional<std::exception>)> stream_io;
   
 private:
   std::map<int, stream_pointer> _streams;
   tcp_listener<tcp_client> _listener;
-  std::optional<stream_callback> _on_open;
-  std::optional<stream_callback> _on_read;
-  std::optional<stream_callback> _on_close;
+  std::optional<stream_connection> _on_open;
+  std::optional<stream_connection> _on_close;
+  std::optional<stream_io> _on_read;
+  std::optional<stream_io> _on_write;
 
 public:
   tcp_server(
     uint16_t port,
-    const std::optional<stream_callback> on_open = std::nullopt,
-    const std::optional<stream_callback> on_read = std::nullopt,
-    const std::optional<stream_callback> on_close = std::nullopt)
+    const std::optional<stream_connection> on_open = std::nullopt,
+    const std::optional<stream_connection> on_close = std::nullopt,
+    const std::optional<stream_io> on_read = std::nullopt,
+    const std::optional<stream_io> on_write = std::nullopt)
     : _on_open(on_open),
+      _on_close(on_close),
       _on_read(on_read),
-      _on_close(on_close)
+      _on_write(on_write)
   {
     _listener.bind(port);
     _listener.blocking(false);
@@ -47,37 +51,30 @@ public:
 
   void event_loop(int backlog = 10)
   {
-    try
-    {
-      _listener.listen(backlog);
+    _listener.listen(backlog);
 
-      bool is_ok = true;
+    bool is_ok = true;
 
-      while (is_ok) {
+    while (is_ok) {
 
-        std::vector<pollfd> fds = make_poll_fds();
+      std::vector<pollfd> fds = make_poll_fds();
 
-        int active_fd_count = poll(fds);
+      int active_fd_count = poll(fds);
 
-        for (const auto& poll_state : fds)
+      for (const auto& poll_state : fds)
+      {
+        if (poll_state.revents == 0)
         {
-          if (poll_state.revents == 0)
-          {
-            continue; // no events for file descriptor.
-          }
-
-          handle_event(poll_state);
-
-          if (--active_fd_count == 0)
-            break;
+          continue; // no events for file descriptor.
         }
 
-        remove_closed_streams();
+        handle_event(poll_state);
+
+        if (--active_fd_count == 0)
+          break;
       }
-    }
-    catch(const std::exception& e)
-    {
-      std::cerr << "Event loop failed - " << e.what() << '\n';
+
+      remove_closed_streams();
     }
   }
 
@@ -92,11 +89,11 @@ private:
 
     for (auto& [client_fd, stream] : _streams)
     {
-      // We are interested in all incoming data.
+      // We are always interested in incoming data.
       int16_t flags = POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL;
 
       // We are interested in writes when we have data to write.
-      if (!stream->has_writes())
+      if (stream->has_writes())
           flags |= POLLOUT;
 
       fds.push_back(pollfd{client_fd, flags, 0});
@@ -119,7 +116,9 @@ private:
 
     for (auto fd : closed_fds)
     {
+      auto stream = _streams[fd];
       _streams.erase(fd);
+      raise(_on_close, fd, stream, _streams);
     }
   }
 
@@ -134,8 +133,18 @@ private:
     return active_fd_count;
   }
 
+  void raise(const std::optional<stream_connection>& callback, int fd, const stream_pointer& stream, const stream_map& streams)
+  {
+    if (callback.has_value())
+    {
+      callback.value()(fd, stream, _streams);
+    }
+  }
+
   void handle_accept()
   {
+    // Accept the client. This might throw an exception which will not be cached, as subsequent
+    // connections will also fail.
     auto client = _listener.accept(
       [](int fd, const std::string& addr, uint16_t port)
       {
@@ -143,11 +152,17 @@ private:
       }
     );
     client->blocking(false);
+
     auto stream = std::make_shared<tcp_buffered_stream<tcp_client>>(client, 8096, 8096);
     _streams[client->fd()] = stream;
-    if (_on_open.has_value())
+    raise(_on_open, client->fd(), stream, _streams);
+  }
+
+  void raise(const std::optional<stream_io>& callback, int fd, const stream_pointer& stream, const stream_map& streams, std::optional<std::exception> error)
+  {
+    if (callback.has_value())
     {
-      _on_open.value()(client->fd(), stream, _streams);
+      callback.value()(fd, stream, _streams, error);
     }
   }
 
@@ -157,42 +172,30 @@ private:
     try
     {
       bool is_open = stream->enqueue_reads();
-      if (_on_read.has_value())
-      {
-        _on_read.value()(fd, stream, _streams);
-      }
+      raise(_on_read, fd, stream, _streams, std::nullopt);
       return is_open;
     }
     catch(const std::exception& e)
     {
-      std::cerr << "read failed - " << e.what() << '\n';
-      handle_close(fd);
+      raise(_on_read, fd, stream, _streams, std::nullopt);
       return false;
     }    
   }
 
   bool handle_write(int fd)
   {
+    auto& stream = _streams[fd];
+
     try
     {
-      return _streams[fd]->write_enqueued();
+      bool is_open = stream->write_enqueued();
+      raise(_on_write, fd, stream, _streams, std::nullopt);
+      return is_open;
     }
     catch(const std::exception& e)
     {
-      std::cerr << "write failed - " << e.what() << '\n';
+      raise(_on_write, fd, stream, _streams, std::nullopt);
       return false;
-    }
-  }
-
-  void handle_close(int fd)
-  {
-    auto stream = _streams[fd];
-
-    _streams.erase(fd);
-    
-    if (_on_close.has_value())
-    {
-      _on_close.value()(fd, stream, _streams);
     }
   }
 
@@ -200,9 +203,6 @@ private:
   {
     if ((poll_state.revents & POLLIN) == POLLIN)
     {
-      // Read events.
-
-      // Listener read.
       if (poll_state.fd == _listener.fd())
       {
         // A read on a listening socket indicates a client can be accepted.
@@ -211,25 +211,18 @@ private:
         return;
       }
 
-      // Client read.
-      bool is_open = handle_read(poll_state.fd);
-      if (!is_open)
+      if (!handle_read(poll_state.fd))
       {
-        // The read detected a close. 
-        handle_close(poll_state.fd);
-        // No further events can be handled for a closed stream.
+        // No further events can be handled for this stream.
         return;
       }
     }
 
     if ((poll_state.revents & POLLOUT) == POLLOUT)
     {
-      bool is_open = handle_write(poll_state.fd);
-      if (!is_open)
+      if (!handle_write(poll_state.fd))
       {
-        // The write detected a close.
-        handle_close(poll_state.fd);
-        // No further events can be handled for a closed stream.
+        // No further events can be handled for this stream.
         return;
       }
     }

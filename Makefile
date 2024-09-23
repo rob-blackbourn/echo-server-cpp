@@ -1,5 +1,6 @@
 CXX = clang++
 CXXFLAGS = -g -std=c++23 -Wall
+LDLIBS = -lspdlog -lfmt
 
 HPP_FILES = \
 	tcp.hpp \
