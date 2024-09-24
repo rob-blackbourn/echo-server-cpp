@@ -13,17 +13,17 @@ int main(int argc, char** argv)
 
   auto server = tcp_server(
     port,
-    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
+    [](tcp_server&, const tcp_server::stream_pointer& stream)
     {
-      spdlog::info("on_open: {}", fd);
+      spdlog::info("on_open: {}", stream->socket->fd());
     },
-    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
+    [](tcp_server&, const tcp_server::stream_pointer& stream)
     {
-      spdlog::info("on_close: {}", fd);
+      spdlog::info("on_close: {}", stream->socket->fd());
     },
-    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams, std::optional<std::exception> error)
+    [](tcp_server& server, const tcp_server::stream_pointer& stream, std::optional<std::exception> error)
     {
-      spdlog::info("on_read: {}", fd);
+      spdlog::info("on_read: {}", stream->socket->fd());
 
       if (error)
       {
@@ -35,9 +35,9 @@ int main(int argc, char** argv)
       {
         auto buf = stream->deque_read();
         spdlog::info("on_read: received {}", to_string(buf));
-        for (auto& [other_fd, other_stream] : streams)
+        for (auto& [other_fd, other_stream] : server.streams())
         {
-          if (other_fd != fd)
+          if (other_fd != stream->socket->fd())
           {
             spdlog::info("on_read: sending to {}", other_fd);
             other_stream->enqueue_write(buf);
@@ -45,9 +45,9 @@ int main(int argc, char** argv)
         }
       }
     },
-    [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams, std::optional<std::exception> error)
+    [](tcp_server&, const tcp_server::stream_pointer& stream, std::optional<std::exception> error)
     {
-      spdlog::info("on_write: {}", fd);
+      spdlog::info("on_write: {}", stream->socket->fd());
 
       if (error)
       {

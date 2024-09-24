@@ -25,8 +25,8 @@ namespace jetblack::net
     typedef tcp_buffered_stream stream_type;
     typedef std::shared_ptr<stream_type> stream_pointer;
     typedef std::map<int, stream_pointer> stream_map;
-    typedef std::function<void(int, const stream_pointer&, const stream_map&)> stream_connection;
-    typedef std::function<void(int, const stream_pointer&, const stream_map&, std::optional<std::exception>)> stream_io;
+    typedef std::function<void(tcp_server&, const stream_pointer&)> stream_connection;
+    typedef std::function<void(tcp_server&, const stream_pointer&, std::optional<std::exception>)> stream_io;
     
   private:
     std::map<int, stream_pointer> streams_;
@@ -52,6 +52,8 @@ namespace jetblack::net
       listener_.blocking(false);
       listener_.reuseaddr(true);
     }
+
+    const std::map<int, stream_pointer>& streams() const noexcept { return streams_; }
 
     void event_loop(int backlog = 10)
     {
@@ -141,7 +143,7 @@ namespace jetblack::net
     {
       if (callback.has_value())
       {
-        callback.value()(fd, stream, streams_);
+        callback.value()(*this, stream);
       }
     }
 
@@ -161,7 +163,7 @@ namespace jetblack::net
     {
       if (callback.has_value())
       {
-        callback.value()(fd, stream, streams_, error);
+        callback.value()(*this, stream, error);
       }
     }
 

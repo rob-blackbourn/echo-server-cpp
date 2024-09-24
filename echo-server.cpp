@@ -17,17 +17,17 @@ int main(int argc, char** argv)
     
     auto server = tcp_server(
       port,
-      [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
+      [](tcp_server&, const tcp_server::stream_pointer& stream)
       {
-        spdlog::info("on_open: {}", fd);
+        spdlog::info("on_open: {}", stream->socket->fd());
       },
-      [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams)
+      [](tcp_server&, const tcp_server::stream_pointer& stream)
       {
-        spdlog::info("on_close: {}", fd);
+        spdlog::info("on_close: {}", stream->socket->fd());
       },
-      [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams, std::optional<std::exception> error)
+      [](tcp_server&, const tcp_server::stream_pointer& stream, std::optional<std::exception> error)
       {
-        spdlog::info("on_read: {}", fd);
+        spdlog::info("on_read: {}", stream->socket->fd());
 
         if (error)
         {
@@ -42,9 +42,9 @@ int main(int argc, char** argv)
           stream->enqueue_write(buf);
         }
       },
-      [](int fd, const tcp_server::stream_pointer& stream, const tcp_server::stream_map& streams, std::optional<std::exception> error)
+      [](tcp_server&, const tcp_server::stream_pointer& stream, std::optional<std::exception> error)
       {
-        spdlog::info("on_write: {}", fd);
+        spdlog::info("on_write: {}", stream->socket->fd());
 
         if (error)
         {
