@@ -1,15 +1,12 @@
 #ifndef JETBLACK_NET_MATCH_HPP
 #define JETBLACK_NET_MATCH_HPP
 
-namespace jetblack
+namespace jetblack::net
 {
-  namespace net
-  {
-    
-    template<class... Ts> struct match : Ts... { using Ts::operator()...; };
-    template<class... Ts> match(Ts...) -> match<Ts...>;
-    
-  }
+  
+  template<class... Ts> struct match : Ts... { using Ts::operator()...; };
+  template<class... Ts> match(Ts...) -> match<Ts...>;
+
 }
 
 #endif // JETBLACK_NET_MATCH_HPP
