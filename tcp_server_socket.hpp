@@ -18,22 +18,28 @@
 
 #include "tcp_socket.hpp"
 
-class tcp_server_socket : public tcp_socket
-{
-private:
-  std::string address_;
-  uint16_t port_;
+namespace jetblack {
+  namespace net {
 
-public:
-  tcp_server_socket(int fd, const std::string& address, uint16_t port) noexcept
-    : tcp_socket(fd)
-    , address_(address)
-    , port_(port)
-  {
+    class tcp_server_socket : public tcp_socket
+    {
+    private:
+      std::string address_;
+      uint16_t port_;
+
+    public:
+      tcp_server_socket(int fd, const std::string& address, uint16_t port) noexcept
+        : tcp_socket(fd)
+        , address_(address)
+        , port_(port)
+      {
+      }
+
+      const std::string& address() const noexcept { return address_; }
+      uint16_t port() const noexcept { return port_; }
+    };
+
   }
-
-  const std::string& address() const noexcept { return address_; }
-  uint16_t port() const noexcept { return port_; }
-};
+}
 
 #endif // __tcp_server_socket_hpp

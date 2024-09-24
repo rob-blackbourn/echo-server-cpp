@@ -5,6 +5,8 @@
 #include "tcp.hpp"
 #include "utils.hpp"
 
+using namespace jetblack::net;
+
 int main(int argc, char** argv)
 {
   const uint16_t port = 22000;

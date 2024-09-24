@@ -19,77 +19,83 @@
 
 #include "tcp_socket.hpp"
 
-struct eof {};
-struct blocked {};
+namespace jetblack {
+  namespace net {
 
-class tcp_stream
-{
-public:
-  typedef std::shared_ptr<tcp_socket> socket_pointer;
+    struct eof {};
+    struct blocked {};
 
-public:
-  tcp_stream(socket_pointer socket) noexcept
-    : socket(socket)
-  {
-  }
+    class tcp_stream
+    {
+    public:
+      typedef std::shared_ptr<tcp_socket> socket_pointer;
 
-  socket_pointer socket;
-
-  std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
-  {
-    std::vector<char> buf(len);
-    int result = ::read(socket->fd(), buf.data(), len);
-    if (result == -1) {
-      // Check if it's flow control.
-      if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
-        // Not a flow control error; the socket has faulted.
-        socket->is_open(false);
-        throw std::system_error(
-          errno, std::generic_category(), "client socket failed to read");
+    public:
+      tcp_stream(socket_pointer socket) noexcept
+        : socket(socket)
+      {
       }
 
-      // The socket is ok, but nothing has been read due to blocking.
-      return blocked {};
-    }
+      socket_pointer socket;
 
-    if (result == 0) {
-      // A read of zero bytes indicates socket has closed.
-      socket->is_open(false);
-      return eof {};
-    }
+      std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
+      {
+        std::vector<char> buf(len);
+        int result = ::read(socket->fd(), buf.data(), len);
+        if (result == -1) {
+          // Check if it's flow control.
+          if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
+            // Not a flow control error; the socket has faulted.
+            socket->is_open(false);
+            throw std::system_error(
+              errno, std::generic_category(), "client socket failed to read");
+          }
 
-    // Data has been read successfully. Resize the buffer and return.
-    buf.resize(result);
-    return buf;
-  }
+          // The socket is ok, but nothing has been read due to blocking.
+          return blocked {};
+        }
 
-  std::variant<ssize_t, eof, blocked> write(const std::span<char>& buf)
-  {
-    int result = ::write(socket->fd(), buf.data(), buf.size());
-    if (result == -1)
-    {
-      // Check if it's flow control.
-      if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
-        // Not flow control; the socket has faulted.
-        socket->is_open(false);
-        throw std::system_error(
-          errno, std::generic_category(), "client socket failed to write");
+        if (result == 0) {
+          // A read of zero bytes indicates socket has closed.
+          socket->is_open(false);
+          return eof {};
+        }
+
+        // Data has been read successfully. Resize the buffer and return.
+        buf.resize(result);
+        return buf;
       }
 
-      // The socket is ok, but nothing has been written due to blocking.
-      return blocked {};
-    }
+      std::variant<ssize_t, eof, blocked> write(const std::span<char>& buf)
+      {
+        int result = ::write(socket->fd(), buf.data(), buf.size());
+        if (result == -1)
+        {
+          // Check if it's flow control.
+          if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
+            // Not flow control; the socket has faulted.
+            socket->is_open(false);
+            throw std::system_error(
+              errno, std::generic_category(), "client socket failed to write");
+          }
 
-    if (result == 0)
-    {
-      // A write of zero bytes indicates socket has closed.
-      socket->is_open(false);
-      return eof {};
-    }
+          // The socket is ok, but nothing has been written due to blocking.
+          return blocked {};
+        }
 
-    // return the number of bytes that were written.
-    return result;
+        if (result == 0)
+        {
+          // A write of zero bytes indicates socket has closed.
+          socket->is_open(false);
+          return eof {};
+        }
+
+        // return the number of bytes that were written.
+        return result;
+      }
+    };
+
   }
-};
+}
 
 #endif // __tcp_stream_hpp
