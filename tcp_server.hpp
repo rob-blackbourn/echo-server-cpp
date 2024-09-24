@@ -12,7 +12,7 @@
 
 #include "tcp_socket.hpp"
 #include "tcp_server_socket.hpp"
-#include "tcp_listener.hpp"
+#include "tcp_listener_socket.hpp"
 
 #include "tcp_buffered_stream.hpp"
 
@@ -30,7 +30,7 @@ namespace jetblack {
       
     private:
       std::map<int, stream_pointer> streams_;
-      tcp_listener listener_;
+      tcp_listener_socket listener_;
       std::optional<stream_connection> on_open_;
       std::optional<stream_connection> on_close_;
       std::optional<stream_io> on_read_;

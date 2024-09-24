@@ -1,5 +1,5 @@
-#ifndef __tcp_listener_hpp
-#define __tcp_listener_hpp
+#ifndef __tcp_listener_socket_hpp
+#define __tcp_listener_socket_hpp
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -19,18 +19,18 @@
 namespace jetblack {
   namespace net {
 
-    class tcp_listener : public tcp_socket
+    class tcp_listener_socket : public tcp_socket
     {
     public:
       typedef std::shared_ptr<tcp_server_socket> client_pointer;
 
     public:
-      tcp_listener()
+      tcp_listener_socket()
         : tcp_socket()
       {
       }
 
-      tcp_listener(int) = delete;
+      tcp_listener_socket(int) = delete;
 
       void bind(uint16_t port) {
         uint32_t addr = htonl(INADDR_ANY);
@@ -99,4 +99,4 @@ namespace jetblack {
   }
 }
 
-#endif // __tcp_listener_hpp
+#endif // __tcp_listener_socket_hpp

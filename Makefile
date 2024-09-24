@@ -5,7 +5,7 @@ LDLIBS = -lspdlog -lfmt
 HPP_FILES = \
 	tcp.hpp \
 	tcp_socket.hpp \
-	tcp_listener.hpp \
+	tcp_listener_socket.hpp \
 	tcp_server_socket.hpp \
 	tcp_stream.hpp \
 	tcp_buffered_stream.hpp \
