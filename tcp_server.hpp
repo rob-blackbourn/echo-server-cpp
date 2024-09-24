@@ -18,7 +18,7 @@
 class tcp_server
 {
 public:
-  typedef tcp_buffered_stream<tcp_server_socket> stream_type;
+  typedef tcp_buffered_stream stream_type;
   typedef std::shared_ptr<stream_type> stream_pointer;
   typedef std::map<int, stream_pointer> stream_map;
   typedef std::function<void(int, const stream_pointer&, const stream_map&)> stream_connection;
@@ -148,7 +148,7 @@ private:
     auto client = listener_.accept();
     client->blocking(false);
 
-    auto stream = std::make_shared<tcp_buffered_stream<tcp_server_socket>>(client, 8096, 8096);
+    auto stream = std::make_shared<tcp_buffered_stream>(client, 8096, 8096);
     streams_[client->fd()] = stream;
     raise(on_open_, client->fd(), stream, streams_);
   }

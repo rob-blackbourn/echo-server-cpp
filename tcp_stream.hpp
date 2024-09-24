@@ -17,14 +17,15 @@
 #include <variant>
 #include <vector>
 
+#include "tcp_socket.hpp"
+
 struct eof {};
 struct blocked {};
 
-template<class TSocket>
 class tcp_stream
 {
 public:
-  typedef std::shared_ptr<TSocket> socket_pointer;
+  typedef std::shared_ptr<tcp_socket> socket_pointer;
 
 public:
   tcp_stream(socket_pointer socket) noexcept

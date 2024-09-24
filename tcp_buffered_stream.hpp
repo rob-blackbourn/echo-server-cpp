@@ -6,8 +6,7 @@
 #include "match.hpp"
 #include "tcp_stream.hpp"
 
-template<class TSocket>
-class tcp_buffered_stream : public tcp_stream<TSocket>
+class tcp_buffered_stream : public tcp_stream
 {
 private:
   std::deque<std::vector<char>> read_queue_;
@@ -18,10 +17,10 @@ public:
   const std::size_t write_bufsiz;
 
   tcp_buffered_stream(
-    std::shared_ptr<TSocket> socket,
+    std::shared_ptr<tcp_socket> socket,
     std::size_t read_bufsiz,
     std::size_t write_bufsiz)
-    : tcp_stream<TSocket>(socket),
+    : tcp_stream(socket),
       read_bufsiz(read_bufsiz),
       write_bufsiz(write_bufsiz)
   {
@@ -38,7 +37,7 @@ public:
 
   bool enqueue_reads()
   {
-    bool ok = tcp_stream<TSocket>::socket->is_open();
+    bool ok = tcp_stream::socket->is_open();
     while (ok) {
       ok = std::visit(match {
         
@@ -55,13 +54,13 @@ public:
         [&](std::vector<char>&& buf) mutable
         {
           read_queue_.push_back(std::move(buf));
-          return tcp_stream<TSocket>::socket->is_open();
+          return tcp_stream::socket->is_open();
         }
 
       },
-      tcp_stream<TSocket>::read(read_bufsiz));
+      tcp_stream::read(read_bufsiz));
     }
-    return tcp_stream<TSocket>::socket->is_open();
+    return tcp_stream::socket->is_open();
   }
 
   bool has_writes() const noexcept { return !write_queue_.empty(); }
@@ -73,7 +72,7 @@ public:
 
   bool write_enqueued()
   {
-    bool has_writes = tcp_stream<TSocket>::socket->is_open() && !write_queue_.empty();
+    bool has_writes = tcp_stream::socket->is_open() && !write_queue_.empty();
     while (has_writes) {
 
       auto& [orig_buf, offset] = write_queue_.front();
@@ -102,14 +101,14 @@ public:
             // queue.
             write_queue_.pop_front();
           }
-          return tcp_stream<TSocket>::socket->is_open() && !write_queue_.empty();
+          return tcp_stream::socket->is_open() && !write_queue_.empty();
         }
         
       },
-      tcp_stream<TSocket>::write(buf));
+      tcp_stream::write(buf));
     }
 
-    return tcp_stream<TSocket>::socket->is_open();
+    return tcp_stream::socket->is_open();
   }
 };
 
