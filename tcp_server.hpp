@@ -8,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
 #include "tcp_socket.hpp"
 #include "tcp_server_socket.hpp"

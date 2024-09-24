@@ -29,6 +29,7 @@ namespace jetblack {
     {
     public:
       typedef std::shared_ptr<tcp_socket> socket_pointer;
+      typedef std::vector<char> buffer_type;
 
     public:
       tcp_stream(socket_pointer socket) noexcept
@@ -38,9 +39,9 @@ namespace jetblack {
 
       socket_pointer socket;
 
-      std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
+      std::variant<buffer_type, eof, blocked> read(std::size_t len)
       {
-        std::vector<char> buf(len);
+        buffer_type buf(len);
         int result = ::read(socket->fd(), buf.data(), len);
         if (result == -1) {
           // Check if it's flow control.

@@ -2,6 +2,9 @@
 #define __tcp_buffered_stream_hpp
 
 #include <deque>
+#include <memory>
+#include <vector>
+#include <utility>
 
 #include "match.hpp"
 #include "tcp_stream.hpp"
@@ -11,9 +14,12 @@ namespace jetblack {
     
     class tcp_buffered_stream : public tcp_stream
     {
+    public:
+      typedef std::vector<char> buffer_type;
+      
     private:
-      std::deque<std::vector<char>> read_queue_;
-      std::deque<std::pair<std::vector<char>, std::size_t>> write_queue_;
+      std::deque<buffer_type> read_queue_;
+      std::deque<std::pair<buffer_type, std::size_t>> write_queue_;
 
     public:
       const std::size_t read_bufsiz;
@@ -31,7 +37,7 @@ namespace jetblack {
 
       bool has_reads() const noexcept { return !read_queue_.empty(); }
 
-      std::vector<char> deque_read() noexcept
+      buffer_type deque_read() noexcept
       {
         auto buf { std::move(read_queue_.front()) };
         read_queue_.pop_front();
@@ -54,7 +60,7 @@ namespace jetblack {
               return false;
             },
 
-            [&](std::vector<char>&& buf) mutable
+            [&](buffer_type&& buf) mutable
             {
               read_queue_.push_back(std::move(buf));
               return socket->is_open();
@@ -68,7 +74,7 @@ namespace jetblack {
 
       bool has_writes() const noexcept { return !write_queue_.empty(); }
 
-      void enqueue_write(std::vector<char> buf)
+      void enqueue_write(buffer_type buf)
       {
         write_queue_.push_back(std::make_pair(std::move(buf), 0));
       }
