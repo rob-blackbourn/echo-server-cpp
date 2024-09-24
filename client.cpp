@@ -6,12 +6,13 @@ using namespace jetblack::net;
 
 int main()
 {
+  const std::string host { "localhost" };
   const uint16_t port = 22000;
 
   try
   {
     auto socket = tcp_client_socket();
-    socket.connect("127.0.0.1", port);
+    socket.connect(host, port);
 
     while (1)
     {

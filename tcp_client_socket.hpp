@@ -7,9 +7,12 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#include <array>
+#include <charconv>
 #include <cstdint>
 #include <cstring>
 #include <exception>
+#include <memory>
 #include <string>
 #include <system_error>
 
@@ -36,27 +39,52 @@ namespace jetblack::net
       }
     }
 
-    void connect(const in_addr& address, uint16_t port)
+    void connect(const in_addr& host, uint16_t port)
     {
-      sockaddr_in servaddr;
-      std::memset(&servaddr, 0, sizeof(servaddr));
-      servaddr.sin_family = AF_INET;
-      std::memcpy(&servaddr.sin_addr, &address, sizeof(address));
-      servaddr.sin_port = htons(port);
+      sockaddr_in addr;
+      std::memset(&addr, 0, sizeof(addr));
+      addr.sin_family = AF_INET;
+      std::memcpy(&addr.sin_addr, &host, sizeof(host));
+      addr.sin_port = htons(port);
 
-      connect(servaddr);
+      connect(addr);
     }
 
-    void connect(const std::string& address, std::uint16_t port)
+    void connect(const std::string& host, std::uint16_t port)
     {
-      in_addr addr;
-      if (inet_pton(AF_INET, address.c_str(), &addr) != 1)
+      char port_str[6];
+      std::memset(port_str, 0, sizeof(port_str));
+      auto res = std::to_chars(port_str, port_str + sizeof(port_str) - 1, port);
+      if (res.ec != std::errc{})
       {
-        throw std::runtime_error("Failed to connect");
+          throw std::system_error(std::make_error_code(res.ec));
       }
 
-      connect(addr, port);
+      addrinfo hints {
+          .ai_flags = 0,
+          .ai_family = AF_INET,
+          .ai_socktype = SOCK_STREAM,
+          .ai_protocol = IPPROTO_TCP,
+          .ai_addrlen = 0,
+          .ai_addr = nullptr,
+          .ai_canonname = nullptr,
+          .ai_next = nullptr
+      };
+      addrinfo* info;
+      int result = getaddrinfo(host.c_str(), port_str, &hints, &info);
+      if (result != 0)
+      {
+          throw std::runtime_error(gai_strerror(result));
+      }
+
+      sockaddr_in addr;
+      std::memcpy(&addr, info->ai_addr, info->ai_addrlen);
+
+      freeaddrinfo(info);
+
+      connect(addr);
     }
+
   };
   
 }
