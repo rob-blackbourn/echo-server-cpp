@@ -1,5 +1,5 @@
-#ifndef __tcp_socket_hpp
-#define __tcp_socket_hpp
+#ifndef JETBLACK_NET_TCP_SOCKET_HPP
+#define JETBLACK_NET_TCP_SOCKET_HPP
 
 #include <arpa/inet.h>
 #include <fcntl.h>
@@ -11,8 +11,10 @@
 #include <cerrno>
 #include <system_error>
 
-namespace jetblack {
-  namespace net {
+namespace jetblack
+{
+  namespace net
+  {
 
     class tcp_socket
     {
@@ -97,4 +99,4 @@ namespace jetblack {
   }
 }
 
-#endif // __tcp_socket_hpp
+#endif // JETBLACK_NET_TCP_SOCKET_HPP

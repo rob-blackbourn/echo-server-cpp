@@ -1,5 +1,5 @@
-#ifndef __tcp_server_hpp
-#define __tcp_server_hpp
+#ifndef JETBLACK_NET_TCP_SERVER_HPP
+#define JETBLACK_NET_TCP_SERVER_HPP
 
 #include <poll.h>
 
@@ -16,8 +16,10 @@
 
 #include "tcp_buffered_stream.hpp"
 
-namespace jetblack {
-  namespace net {
+namespace jetblack
+{
+  namespace net
+  {
 
     class tcp_server
     {
@@ -232,4 +234,4 @@ namespace jetblack {
   }
 }
 
-#endif // __tcp_server_hpp
+#endif // JETBLACK_NET_TCP_SERVER_HPP

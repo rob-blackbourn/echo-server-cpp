@@ -1,5 +1,5 @@
-#ifndef __tcp_listener_socket_hpp
-#define __tcp_listener_socket_hpp
+#ifndef JETBLACK_NET_TCP_LISTENER_SOCKET_HPP
+#define JETBLACK_NET_TCP_LISTENER_SOCKET_HPP
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -16,8 +16,10 @@
 #include "tcp_socket.hpp"
 #include "tcp_server_socket.hpp"
 
-namespace jetblack {
-  namespace net {
+namespace jetblack
+{
+  namespace net
+  {
 
     class tcp_listener_socket : public tcp_socket
     {
@@ -99,4 +101,4 @@ namespace jetblack {
   }
 }
 
-#endif // __tcp_listener_socket_hpp
+#endif

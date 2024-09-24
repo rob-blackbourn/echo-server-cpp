@@ -1,7 +1,15 @@
-#ifndef __match_hpp
-#define __match_hpp
+#ifndef JETBLACK_NET_MATCH_HPP
+#define JETBLACK_NET_MATCH_HPP
 
-template<class... Ts> struct match : Ts... { using Ts::operator()...; };
-template<class... Ts> match(Ts...) -> match<Ts...>;
+namespace jetblack
+{
+  namespace net
+  {
+    
+    template<class... Ts> struct match : Ts... { using Ts::operator()...; };
+    template<class... Ts> match(Ts...) -> match<Ts...>;
+    
+  }
+}
 
-#endif // __match_hpp
+#endif // JETBLACK_NET_MATCH_HPP

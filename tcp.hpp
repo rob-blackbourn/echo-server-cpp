@@ -1,5 +1,5 @@
-#ifndef __tcp_hpp
-#define __tcp_hpp
+#ifndef JETBLACK_NET_TCP_HPP
+#define JETBLACK_NET_TCP_HPP
 
 #include "tcp_socket.hpp"
 #include "tcp_server_socket.hpp"
@@ -10,4 +10,4 @@
 
 #include "tcp_server.hpp"
 
-#endif // __tcp_hpp
+#endif // JETBLACK_NET_TCP_HPP

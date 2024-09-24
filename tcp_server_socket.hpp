@@ -1,5 +1,5 @@
-#ifndef __tcp_server_socket_hpp
-#define __tcp_server_socket_hpp
+#ifndef JETBLACK_NET_TCP_SERVER_SOCKET_HPP
+#define JETBLACK_NET_TCP_SERVER_SOCKET_HPP
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -18,8 +18,10 @@
 
 #include "tcp_socket.hpp"
 
-namespace jetblack {
-  namespace net {
+namespace jetblack
+{
+  namespace net
+  {
 
     class tcp_server_socket : public tcp_socket
     {
@@ -42,4 +44,4 @@ namespace jetblack {
   }
 }
 
-#endif // __tcp_server_socket_hpp
+#endif // JETBLACK_NET_TCP_SERVER_SOCKET_HPP

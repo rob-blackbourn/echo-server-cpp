@@ -1,5 +1,5 @@
-#ifndef __tcp_stream_hpp
-#define __tcp_stream_hpp
+#ifndef JETBLACK_NET_TCP_STREAM_HPP
+#define JETBLACK_NET_TCP_STREAM_HPP
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -19,8 +19,10 @@
 
 #include "tcp_socket.hpp"
 
-namespace jetblack {
-  namespace net {
+namespace jetblack
+{
+  namespace net
+  {
 
     struct eof {};
     struct blocked {};
@@ -99,4 +101,4 @@ namespace jetblack {
   }
 }
 
-#endif // __tcp_stream_hpp
+#endif // JETBLACK_NET_TCP_STREAM_HPP

@@ -1,5 +1,5 @@
-#ifndef __tcp_buffered_stream_hpp
-#define __tcp_buffered_stream_hpp
+#ifndef JETBLACK_NET_TCP_BUFFERED_STREAM_HPP
+#define JETBLACK_NET_TCP_BUFFERED_STREAM_HPP
 
 #include <deque>
 #include <memory>
@@ -9,8 +9,10 @@
 #include "match.hpp"
 #include "tcp_stream.hpp"
 
-namespace jetblack {
-  namespace net {
+namespace jetblack
+{
+  namespace net
+  {
     
     class tcp_buffered_stream : public tcp_stream
     {
@@ -121,4 +123,4 @@ namespace jetblack {
   }
 }
 
-#endif // __tcp_buffered_stream_hpp
+#endif // JETBLACK_NET_TCP_BUFFERED_STREAM_HPP
