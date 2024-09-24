@@ -17,12 +17,10 @@
 #include "tcp_socket.hpp"
 #include "tcp_server_socket.hpp"
 
-template<class TClient = tcp_server_socket>
 class tcp_listener : public tcp_socket
 {
 public:
-  typedef std::shared_ptr<TClient> client_pointer;
-  typedef std::function<client_pointer(int fd, const std::string& address, uint16_t port)> accept_callback;
+  typedef std::shared_ptr<tcp_server_socket> client_pointer;
 
 public:
   tcp_listener()
@@ -73,7 +71,7 @@ public:
     }
   }
 
-  client_pointer accept(const accept_callback& make_client)
+  client_pointer accept()
   {
     sockaddr_in clientaddr;
     socklen_t clientlen = sizeof(clientaddr);
@@ -92,7 +90,7 @@ public:
     }
     uint16_t port = ntohs(clientaddr.sin_port);
 
-    return make_client(client_fd, address, port);
+    return std::make_shared<tcp_server_socket>(client_fd, address, port);
   }
 };
 

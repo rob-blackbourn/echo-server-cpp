@@ -26,7 +26,7 @@ public:
   
 private:
   std::map<int, stream_pointer> streams_;
-  tcp_listener<tcp_server_socket> listener_;
+  tcp_listener listener_;
   std::optional<stream_connection> on_open_;
   std::optional<stream_connection> on_close_;
   std::optional<stream_io> on_read_;
@@ -143,14 +143,9 @@ private:
 
   void handle_accept()
   {
-    // Accept the client. This might throw an exception which will not be cached, as subsequent
+    // Accept the client. This might throw an exception which will not be caught, as subsequent
     // connections will also fail.
-    auto client = listener_.accept(
-      [](int fd, const std::string& addr, uint16_t port)
-      {
-        return std::make_shared<tcp_server_socket>(fd, addr, port);
-      }
-    );
+    auto client = listener_.accept();
     client->blocking(false);
 
     auto stream = std::make_shared<tcp_buffered_stream<tcp_server_socket>>(client, 8096, 8096);
