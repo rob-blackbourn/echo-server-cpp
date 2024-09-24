@@ -14,34 +14,34 @@
 class tcp_socket
 {
 protected:
-  int _fd;
-  bool _is_open { true };
+  int fd_;
+  bool is_open_ { true };
 
 public:
   explicit tcp_socket()
-    : _fd(socket(AF_INET, SOCK_STREAM, 0))
+    : fd_(socket(AF_INET, SOCK_STREAM, 0))
   {
-    if (_fd == -1) {
+    if (fd_ == -1) {
       throw std::system_error(
         errno, std::generic_category(), "failed to create socket");
     }
   }
 
   explicit tcp_socket(int fd) noexcept
-    : _fd(fd)
+    : fd_(fd)
   {
   }
 
   tcp_socket(const tcp_socket&) = delete;
 
-  int fd() const noexcept { return _fd; }
+  int fd() const noexcept { return fd_; }
 
-  bool is_open() const noexcept { return _is_open; }
-  void is_open(bool value) { _is_open = value; }
+  bool is_open() const noexcept { return is_open_; }
+  void is_open(bool value) { is_open_ = value; }
   
   void close()
   {
-    int result = ::close(_fd);
+    int result = ::close(fd_);
     if (result == -1) {
       throw std::system_error(
         errno, std::generic_category(), "failed to close socket");
@@ -50,7 +50,7 @@ public:
 
   int fcntl_flags() const
   {
-    int flags = ::fcntl(_fd, F_GETFL, 0);
+    int flags = ::fcntl(fd_, F_GETFL, 0);
     if (flags == -1) {
       throw std::system_error(
         errno, std::generic_category(), "fcntl failed to get flags");
@@ -60,7 +60,7 @@ public:
 
   void fcntl_flags(int flags)
   {
-    if (::fcntl(_fd, F_SETFL, flags) == -1) {
+    if (::fcntl(fd_, F_SETFL, flags) == -1) {
       throw std::system_error(
         errno, std::generic_category(), "fcntl failed to set flags");
     }
@@ -79,7 +79,7 @@ public:
   void set_option(int level, int name, bool is_set) const
   {
     int value = is_set ? 1 : 0;
-    if (::setsockopt(_fd, level, name, (void*)&value, sizeof(value)) == -1) {
+    if (::setsockopt(fd_, level, name, (void*)&value, sizeof(value)) == -1) {
       throw std::system_error(
         errno, std::generic_category(), "fcntl failed to set flags");
     }

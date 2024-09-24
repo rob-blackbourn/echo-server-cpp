@@ -21,19 +21,19 @@
 class tcp_client : public tcp_socket
 {
 private:
-  std::string _address;
-  uint16_t _port;
+  std::string address_;
+  uint16_t port_;
 
 public:
   tcp_client(int fd, const std::string& address, uint16_t port) noexcept
     : tcp_socket(fd)
-    , _address(address)
-    , _port(port)
+    , address_(address)
+    , port_(port)
   {
   }
 
-  const std::string& address() const noexcept { return _address; }
-  uint16_t port() const noexcept { return _port; }
+  const std::string& address() const noexcept { return address_; }
+  uint16_t port() const noexcept { return port_; }
 };
 
 #endif // __tcp_client_hpp

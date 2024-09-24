@@ -59,7 +59,7 @@ public:
     servaddr.sin_addr.s_addr = addr;
     servaddr.sin_port = htons(port);
 
-    if (::bind(_fd, (sockaddr*)&servaddr, sizeof(servaddr)) == -1) {
+    if (::bind(fd_, (sockaddr*)&servaddr, sizeof(servaddr)) == -1) {
       throw std::system_error(
         errno, std::generic_category(), "failed to bind listener socket");
     }
@@ -67,7 +67,7 @@ public:
 
   void listen(int backlog = 10)
   {
-    if (::listen(_fd, backlog) == -1) {
+    if (::listen(fd_, backlog) == -1) {
       throw std::system_error(
         errno, std::generic_category(), "failed to listen on bound socket");
     }
@@ -78,7 +78,7 @@ public:
     sockaddr_in clientaddr;
     socklen_t clientlen = sizeof(clientaddr);
 
-    int client_fd = ::accept(_fd, (sockaddr*)&clientaddr, &clientlen);
+    int client_fd = ::accept(fd_, (sockaddr*)&clientaddr, &clientlen);
     if (client_fd == -1) {
       throw std::system_error(
         errno, std::generic_category(), "failed to accept socket");

@@ -25,12 +25,12 @@ public:
   typedef std::function<void(int, const stream_pointer&, const stream_map&, std::optional<std::exception>)> stream_io;
   
 private:
-  std::map<int, stream_pointer> _streams;
-  tcp_listener<tcp_client> _listener;
-  std::optional<stream_connection> _on_open;
-  std::optional<stream_connection> _on_close;
-  std::optional<stream_io> _on_read;
-  std::optional<stream_io> _on_write;
+  std::map<int, stream_pointer> streams_;
+  tcp_listener<tcp_client> listener_;
+  std::optional<stream_connection> on_open_;
+  std::optional<stream_connection> on_close_;
+  std::optional<stream_io> on_read_;
+  std::optional<stream_io> on_write_;
 
 public:
   tcp_server(
@@ -39,19 +39,19 @@ public:
     const std::optional<stream_connection> on_close = std::nullopt,
     const std::optional<stream_io> on_read = std::nullopt,
     const std::optional<stream_io> on_write = std::nullopt)
-    : _on_open(on_open),
-      _on_close(on_close),
-      _on_read(on_read),
-      _on_write(on_write)
+    : on_open_(on_open),
+      on_close_(on_close),
+      on_read_(on_read),
+      on_write_(on_write)
   {
-    _listener.bind(port);
-    _listener.blocking(false);
-    _listener.reuseaddr(true);
+    listener_.bind(port);
+    listener_.blocking(false);
+    listener_.reuseaddr(true);
   }
 
   void event_loop(int backlog = 10)
   {
-    _listener.listen(backlog);
+    listener_.listen(backlog);
 
     bool is_ok = true;
 
@@ -85,9 +85,9 @@ private:
     std::vector<pollfd> fds;
 
     // Add read for the listener in order to detect new connections.
-    fds.push_back(pollfd{_listener.fd(), POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL, 0});
+    fds.push_back(pollfd{listener_.fd(), POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL, 0});
 
-    for (auto& [client_fd, stream] : _streams)
+    for (auto& [client_fd, stream] : streams_)
     {
       // We are always interested in incoming data.
       int16_t flags = POLLIN | POLLPRI | POLLERR | POLLHUP | POLLNVAL;
@@ -106,7 +106,7 @@ private:
   {
     std::vector<int> closed_fds;
     
-    for (auto& [fd, stream] : _streams)
+    for (auto& [fd, stream] : streams_)
     {
       if (!stream->socket->is_open())
       {
@@ -116,9 +116,9 @@ private:
 
     for (auto fd : closed_fds)
     {
-      auto stream = _streams[fd];
-      _streams.erase(fd);
-      raise(_on_close, fd, stream, _streams);
+      auto stream = streams_[fd];
+      streams_.erase(fd);
+      raise(on_close_, fd, stream, streams_);
     }
   }
 
@@ -137,7 +137,7 @@ private:
   {
     if (callback.has_value())
     {
-      callback.value()(fd, stream, _streams);
+      callback.value()(fd, stream, streams_);
     }
   }
 
@@ -145,7 +145,7 @@ private:
   {
     // Accept the client. This might throw an exception which will not be cached, as subsequent
     // connections will also fail.
-    auto client = _listener.accept(
+    auto client = listener_.accept(
       [](int fd, const std::string& addr, uint16_t port)
       {
         return std::make_shared<tcp_client>(fd, addr, port);
@@ -154,47 +154,47 @@ private:
     client->blocking(false);
 
     auto stream = std::make_shared<tcp_buffered_stream<tcp_client>>(client, 8096, 8096);
-    _streams[client->fd()] = stream;
-    raise(_on_open, client->fd(), stream, _streams);
+    streams_[client->fd()] = stream;
+    raise(on_open_, client->fd(), stream, streams_);
   }
 
   void raise(const std::optional<stream_io>& callback, int fd, const stream_pointer& stream, const stream_map& streams, std::optional<std::exception> error)
   {
     if (callback.has_value())
     {
-      callback.value()(fd, stream, _streams, error);
+      callback.value()(fd, stream, streams_, error);
     }
   }
 
   bool handle_read(int fd)
   {
-    auto& stream = _streams[fd];
+    auto& stream = streams_[fd];
     try
     {
       bool is_open = stream->enqueue_reads();
-      raise(_on_read, fd, stream, _streams, std::nullopt);
+      raise(on_read_, fd, stream, streams_, std::nullopt);
       return is_open;
     }
     catch(const std::exception& e)
     {
-      raise(_on_read, fd, stream, _streams, std::nullopt);
+      raise(on_read_, fd, stream, streams_, std::nullopt);
       return false;
     }    
   }
 
   bool handle_write(int fd)
   {
-    auto& stream = _streams[fd];
+    auto& stream = streams_[fd];
 
     try
     {
       bool is_open = stream->write_enqueued();
-      raise(_on_write, fd, stream, _streams, std::nullopt);
+      raise(on_write_, fd, stream, streams_, std::nullopt);
       return is_open;
     }
     catch(const std::exception& e)
     {
-      raise(_on_write, fd, stream, _streams, std::nullopt);
+      raise(on_write_, fd, stream, streams_, std::nullopt);
       return false;
     }
   }
@@ -203,7 +203,7 @@ private:
   {
     if ((poll_state.revents & POLLIN) == POLLIN)
     {
-      if (poll_state.fd == _listener.fd())
+      if (poll_state.fd == listener_.fd())
       {
         // A read on a listening socket indicates a client can be accepted.
         handle_accept();
