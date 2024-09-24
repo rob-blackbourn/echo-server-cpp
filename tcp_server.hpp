@@ -10,7 +10,7 @@
 #include <utility>
 
 #include "tcp_socket.hpp"
-#include "tcp_client.hpp"
+#include "tcp_server_socket.hpp"
 #include "tcp_listener.hpp"
 
 #include "tcp_buffered_stream.hpp"
@@ -18,7 +18,7 @@
 class tcp_server
 {
 public:
-  typedef tcp_buffered_stream<tcp_client> stream_type;
+  typedef tcp_buffered_stream<tcp_server_socket> stream_type;
   typedef std::shared_ptr<stream_type> stream_pointer;
   typedef std::map<int, stream_pointer> stream_map;
   typedef std::function<void(int, const stream_pointer&, const stream_map&)> stream_connection;
@@ -26,7 +26,7 @@ public:
   
 private:
   std::map<int, stream_pointer> streams_;
-  tcp_listener<tcp_client> listener_;
+  tcp_listener<tcp_server_socket> listener_;
   std::optional<stream_connection> on_open_;
   std::optional<stream_connection> on_close_;
   std::optional<stream_io> on_read_;
@@ -148,12 +148,12 @@ private:
     auto client = listener_.accept(
       [](int fd, const std::string& addr, uint16_t port)
       {
-        return std::make_shared<tcp_client>(fd, addr, port);
+        return std::make_shared<tcp_server_socket>(fd, addr, port);
       }
     );
     client->blocking(false);
 
-    auto stream = std::make_shared<tcp_buffered_stream<tcp_client>>(client, 8096, 8096);
+    auto stream = std::make_shared<tcp_buffered_stream<tcp_server_socket>>(client, 8096, 8096);
     streams_[client->fd()] = stream;
     raise(on_open_, client->fd(), stream, streams_);
   }

@@ -15,9 +15,9 @@
 #include <system_error>
 
 #include "tcp_socket.hpp"
-#include "tcp_client.hpp"
+#include "tcp_server_socket.hpp"
 
-template<class TClient = tcp_client>
+template<class TClient = tcp_server_socket>
 class tcp_listener : public tcp_socket
 {
 public:

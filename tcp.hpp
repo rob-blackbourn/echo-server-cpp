@@ -2,7 +2,7 @@
 #define __tcp_hpp
 
 #include "tcp_socket.hpp"
-#include "tcp_client.hpp"
+#include "tcp_server_socket.hpp"
 #include "tcp_listener.hpp"
 
 #include "tcp_stream.hpp"

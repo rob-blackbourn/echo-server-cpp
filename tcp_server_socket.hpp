@@ -1,5 +1,5 @@
-#ifndef __tcp_client_hpp
-#define __tcp_client_hpp
+#ifndef __tcp_server_socket_hpp
+#define __tcp_server_socket_hpp
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -18,14 +18,14 @@
 
 #include "tcp_socket.hpp"
 
-class tcp_client : public tcp_socket
+class tcp_server_socket : public tcp_socket
 {
 private:
   std::string address_;
   uint16_t port_;
 
 public:
-  tcp_client(int fd, const std::string& address, uint16_t port) noexcept
+  tcp_server_socket(int fd, const std::string& address, uint16_t port) noexcept
     : tcp_socket(fd)
     , address_(address)
     , port_(port)
@@ -36,4 +36,4 @@ public:
   uint16_t port() const noexcept { return port_; }
 };
 
-#endif // __tcp_client_hpp
+#endif // __tcp_server_socket_hpp

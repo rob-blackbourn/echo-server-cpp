@@ -6,7 +6,7 @@ HPP_FILES = \
 	tcp.hpp \
 	tcp_socket.hpp \
 	tcp_listener.hpp \
-	tcp_client.hpp \
+	tcp_server_socket.hpp \
 	tcp_stream.hpp \
 	tcp_buffered_stream.hpp \
 	tcp_server.hpp
