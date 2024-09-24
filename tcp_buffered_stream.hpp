@@ -14,9 +14,6 @@ namespace jetblack {
     
     class tcp_buffered_stream : public tcp_stream
     {
-    public:
-      typedef std::vector<char> buffer_type;
-      
     private:
       std::deque<buffer_type> read_queue_;
       std::deque<std::pair<buffer_type, std::size_t>> write_queue_;
