@@ -124,7 +124,7 @@ namespace jetblack::net
       {
         auto stream = streams_[fd];
         streams_.erase(fd);
-        raise(on_close_, fd, stream, streams_);
+        raise(on_close_, stream);
       }
     }
 
@@ -139,7 +139,7 @@ namespace jetblack::net
       return active_fd_count;
     }
 
-    void raise(const std::optional<stream_connection>& callback, int fd, const stream_pointer& stream, const stream_map& streams)
+    void raise(const std::optional<stream_connection>& callback, const stream_pointer& stream)
     {
       if (callback.has_value())
       {
@@ -156,10 +156,10 @@ namespace jetblack::net
 
       auto stream = std::make_shared<tcp_buffered_stream>(client, 8096, 8096);
       streams_[client->fd()] = stream;
-      raise(on_open_, client->fd(), stream, streams_);
+      raise(on_open_, stream);
     }
 
-    void raise(const std::optional<stream_io>& callback, int fd, const stream_pointer& stream, const stream_map& streams, std::optional<std::exception> error)
+    void raise(const std::optional<stream_io>& callback, const stream_pointer& stream, std::optional<std::exception> error)
     {
       if (callback.has_value())
       {
@@ -173,12 +173,12 @@ namespace jetblack::net
       try
       {
         bool is_open = stream->enqueue_reads();
-        raise(on_read_, fd, stream, streams_, std::nullopt);
+        raise(on_read_, stream, std::nullopt);
         return is_open;
       }
       catch(const std::exception& e)
       {
-        raise(on_read_, fd, stream, streams_, std::nullopt);
+        raise(on_read_, stream, std::nullopt);
         return false;
       }    
     }
@@ -190,12 +190,12 @@ namespace jetblack::net
       try
       {
         bool is_open = stream->write_enqueued();
-        raise(on_write_, fd, stream, streams_, std::nullopt);
+        raise(on_write_, stream, std::nullopt);
         return is_open;
       }
       catch(const std::exception& e)
       {
-        raise(on_write_, fd, stream, streams_, std::nullopt);
+        raise(on_write_, stream, std::nullopt);
         return false;
       }
     }
