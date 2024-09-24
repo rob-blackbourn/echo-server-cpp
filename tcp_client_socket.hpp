@@ -50,7 +50,7 @@ namespace jetblack::net
     void connect(const std::string& address, std::uint16_t port)
     {
       in_addr addr;
-      if (inet_pton(AF_INET, address.c_str(), &addr) == 0)
+      if (inet_pton(AF_INET, address.c_str(), &addr) != 1)
       {
         throw std::runtime_error("Failed to connect");
       }
