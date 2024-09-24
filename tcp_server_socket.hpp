@@ -1,20 +1,8 @@
 #ifndef JETBLACK_NET_TCP_SERVER_SOCKET_HPP
 #define JETBLACK_NET_TCP_SERVER_SOCKET_HPP
 
-#include <arpa/inet.h>
-#include <netdb.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <cerrno>
-#include <optional>
-#include <span>
-#include <stdexcept>
-#include <system_error>
-#include <variant>
-#include <vector>
+#include <cstdint>
+#include <string>
 
 #include "tcp_socket.hpp"
 
@@ -25,10 +13,10 @@ namespace jetblack::net
   {
   private:
     std::string address_;
-    uint16_t port_;
+    std::uint16_t port_;
 
   public:
-    tcp_server_socket(int fd, const std::string& address, uint16_t port) noexcept
+    tcp_server_socket(int fd, const std::string& address, std::uint16_t port) noexcept
       : tcp_socket(fd)
       , address_(address)
       , port_(port)
