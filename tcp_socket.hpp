@@ -37,6 +37,9 @@ namespace jetblack::net
     }
 
     TcpSocket(const TcpSocket&) = delete;
+    TcpSocket(TcpSocket&&) = delete;
+    TcpSocket& operator = (const TcpSocket&) = delete;
+    TcpSocket& operator = (TcpSocket&&) = delete;
 
     ~TcpSocket()
     {
