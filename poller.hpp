@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_POLL_HANDLER_HPP
-#define JETBLACK_NET_POLL_HANDLER_HPP
+#ifndef JETBLACK_NET_POLLER_HPP
+#define JETBLACK_NET_POLLER_HPP
 
 #include <poll.h>
 
@@ -50,13 +50,13 @@ namespace jetblack::net
   {
   public:
     typedef std::shared_ptr<PollHandler> handler_pointer;
-    typedef std::map<int, handler_pointer> poll_handler_map;
+    typedef std::map<int, handler_pointer> handler_map;
     typedef std::function<void(Poller&, int fd)> connection_callback;
     typedef std::function<void(Poller&, int fd, std::vector<std::vector<char>> bufs)> read_callback;
     typedef std::function<void(Poller&, int fd, std::exception)> error_callback;
 
   private:
-    std::map<int, handler_pointer> handlers_;
+    handler_map handlers_;
     connection_callback on_open_;
     connection_callback on_close_;
     read_callback on_read_;
@@ -390,4 +390,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_POLL_HANDLER_HPP
+#endif // JETBLACK_NET_POLLER_HPP
