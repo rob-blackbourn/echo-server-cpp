@@ -9,6 +9,7 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <iostream>
 #include <system_error>
 
 namespace jetblack::net
@@ -36,6 +37,21 @@ namespace jetblack::net
     }
 
     TcpSocket(const TcpSocket&) = delete;
+
+    ~TcpSocket()
+    {
+      if (!is_open_)
+      {
+        try
+        {
+          close();
+          is_open_ = false;
+        }
+        catch(const std::exception& e)
+        {
+        }
+      }
+    }
 
     int fd() const noexcept { return fd_; }
 
