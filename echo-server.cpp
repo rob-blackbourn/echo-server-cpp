@@ -5,6 +5,7 @@
 
 #include "tcp.hpp"
 #include "poller.hpp"
+#include "tcp_listener_socket_poll_handler.hpp"
 #include "utils.hpp"
 
 using namespace jetblack::net;
@@ -36,6 +37,7 @@ int main(int argc, char** argv)
 
         for (auto& buf : bufs)
         {
+          spdlog::info("on_read: received {}", to_string(buf));
           poller.enqueue(fd, buf);
         }
       },
