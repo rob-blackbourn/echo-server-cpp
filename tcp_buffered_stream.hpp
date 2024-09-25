@@ -78,14 +78,14 @@ namespace jetblack::net
 
     bool write_enqueued()
     {
-      bool has_writes = socket->is_open() && !write_queue_.empty();
-      while (has_writes) {
+      bool can_write = socket->is_open() && !write_queue_.empty();
+      while (can_write) {
 
         auto& [orig_buf, offset] = write_queue_.front();
         std::size_t count = std::min(orig_buf.size() - offset, write_bufsiz);
         const auto& buf = std::span<char>(orig_buf).subspan(offset, count);
 
-        has_writes = std::visit(match {
+        can_write = std::visit(match {
           
           [](eof&&)
           {

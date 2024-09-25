@@ -9,7 +9,8 @@ SERVER_HPP = \
 	tcp_server_socket.hpp \
 	tcp_stream.hpp \
 	tcp_buffered_stream.hpp \
-	tcp_server.hpp
+	tcp_server.hpp \
+	poll_handler.hpp
 CLIENT_HPP = \
 	tcp_socket.hpp \
 	tcp_client_socket.hpp
@@ -18,7 +19,7 @@ CLIENT_HPP = \
 default: all
 
 .PHONEY: all
-all: chat-server client client
+all: chat-server echo-server client
 
 chat-server: chat-server.o
 	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@

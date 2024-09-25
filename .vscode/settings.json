@@ -56,7 +56,8 @@
         "variant": "cpp",
         "map": "cpp",
         "set": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "future": "cpp"
     },
     "C_Cpp.clang_format_fallbackStyle": "Mozilla",
     "C_Cpp.clang_format_style": "Mozilla",
