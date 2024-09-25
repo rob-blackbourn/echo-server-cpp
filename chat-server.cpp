@@ -43,7 +43,7 @@ int main(int argc, char** argv)
             if (client_fd != fd)
             {
               spdlog::info("on_read: sending to {}", client_fd);
-              poller.enqueue(client_fd, buf);
+              poller.write(client_fd, buf);
             }
           }
         }

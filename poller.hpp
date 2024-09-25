@@ -56,7 +56,7 @@ namespace jetblack::net
         on_open_(*this, handler->fd());
     }
 
-    void enqueue(int fd, std::vector<char> buf) noexcept
+    void write(int fd, std::vector<char> buf) noexcept
     {
       if (auto i = handlers_.find(fd); i != handlers_.end())
       {

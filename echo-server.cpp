@@ -34,7 +34,7 @@ int main(int argc, char** argv)
         for (auto& buf : bufs)
         {
           spdlog::info("on_read: received {}", to_string(buf));
-          poller.enqueue(fd, buf);
+          poller.write(fd, buf);
         }
       },
       [](Poller&, int fd, std::exception error)
