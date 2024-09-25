@@ -1,8 +1,11 @@
 #include <iostream>
+#include <set>
 
 #include <spdlog/spdlog.h>
 
 #include "tcp.hpp"
+#include "poller.hpp"
+#include "tcp_listener_socket_poll_handler.hpp"
 #include "utils.hpp"
 
 using namespace jetblack::net;
@@ -11,51 +14,52 @@ int main(int argc, char** argv)
 {
   const uint16_t port = 22000;
 
-  auto server = TcpServer(
-    port,
-    [](TcpServer&, const TcpServer::stream_pointer& stream)
-    {
-      spdlog::info("on_open: {}", stream->socket->fd());
-    },
-    [](TcpServer&, const TcpServer::stream_pointer& stream)
-    {
-      spdlog::info("on_close: {}", stream->socket->fd());
-    },
-    [](TcpServer& server, const TcpServer::stream_pointer& stream, std::optional<std::exception> error)
-    {
-      spdlog::info("on_read: {}", stream->socket->fd());
+  try
+  {
+    spdlog::info("starting chat server on port {}.", port);
 
-      if (error)
-      {
-        spdlog::error("on_read: failed to read from socket - {}", error->what());
-        return;
-      }
+    std::set<int> clients;
 
-      while (stream->has_reads())
+    auto poller = Poller(
+      [&clients](Poller&, int fd)
       {
-        auto buf = stream->deque_read();
-        spdlog::info("on_read: received {}", to_string(buf));
-        for (auto& [other_fd, other_stream] : server.streams())
+        spdlog::info("on_open: {}", fd);
+        clients.insert(fd);
+      },
+      [&clients](Poller&, int fd)
+      {
+        spdlog::info("on_close: {}", fd);
+        clients.erase(fd);
+      },
+      [&clients](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
+      {
+        spdlog::info("on_read: {}", fd);
+
+        for (auto& buf : bufs)
         {
-          if (other_fd != stream->socket->fd())
+          spdlog::info("on_read: received {}", to_string(buf));
+          for (auto client_fd : clients)
           {
-            spdlog::info("on_read: sending to {}", other_fd);
-            other_stream->enqueue_write(buf);
+            if (client_fd != fd)
+            {
+              spdlog::info("on_read: sending to {}", client_fd);
+              poller.enqueue(client_fd, buf);
+            }
           }
         }
-      }
-    },
-    [](TcpServer&, const TcpServer::stream_pointer& stream, std::optional<std::exception> error)
-    {
-      spdlog::info("on_write: {}", stream->socket->fd());
-
-      if (error)
+      },
+      [](Poller&, int fd, std::exception error)
       {
-        spdlog::error("on_write: failed to write to socket - {}", error->what());
-        return;
+        spdlog::info("on_error: {}, {}", fd, error.what());
       }
-    });
-  server.event_loop();
+    );
+    poller.add_handler(std::make_shared<TcpListenerSocketPollHandler>(port));
+    poller.event_loop();
+  }
+  catch(const std::exception& error)
+  {
+    spdlog::error("Server failed: {}", error.what());
+  }
 
   return 0;
 }

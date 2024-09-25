@@ -16,22 +16,18 @@ int main(int argc, char** argv)
 
   try
   {
-    spdlog::info("starting server on port {}.", port);
-
-    std::set<int> clients;
+    spdlog::info("starting echo server on port {}.", port);
 
     auto poller = Poller(
-      [&clients](Poller&, int fd)
+      [](Poller&, int fd)
       {
         spdlog::info("on_open: {}", fd);
-        clients.insert(fd);
       },
-      [&clients](Poller&, int fd)
+      [](Poller&, int fd)
       {
         spdlog::info("on_close: {}", fd);
-        clients.erase(fd);
       },
-      [clients](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
+      [](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
       {
         spdlog::info("on_read: {}", fd);
 
