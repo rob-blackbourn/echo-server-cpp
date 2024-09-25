@@ -86,6 +86,35 @@ namespace jetblack::net
 
   private:
 
+    void handle_event(const pollfd& poll_state)
+    {
+      if ((poll_state.revents & POLLIN) == POLLIN)
+      {
+        if (poll_state.fd == listener_.fd())
+        {
+          // A read on a listening socket indicates a client can be accepted.
+          handle_accept();
+          // No further processing is necessary.
+          return;
+        }
+
+        if (!handle_read(poll_state.fd))
+        {
+          // No further events can be handled for this stream.
+          return;
+        }
+      }
+
+      if ((poll_state.revents & POLLOUT) == POLLOUT)
+      {
+        if (!handle_write(poll_state.fd))
+        {
+          // No further events can be handled for this stream.
+          return;
+        }
+      }
+    }
+
     std::vector<pollfd> make_poll_fds()
     {
       std::vector<pollfd> fds;
@@ -197,35 +226,6 @@ namespace jetblack::net
       {
         raise(on_write_, stream, std::nullopt);
         return false;
-      }
-    }
-
-    void handle_event(const pollfd& poll_state)
-    {
-      if ((poll_state.revents & POLLIN) == POLLIN)
-      {
-        if (poll_state.fd == listener_.fd())
-        {
-          // A read on a listening socket indicates a client can be accepted.
-          handle_accept();
-          // No further processing is necessary.
-          return;
-        }
-
-        if (!handle_read(poll_state.fd))
-        {
-          // No further events can be handled for this stream.
-          return;
-        }
-      }
-
-      if ((poll_state.revents & POLLOUT) == POLLOUT)
-      {
-        if (!handle_write(poll_state.fd))
-        {
-          // No further events can be handled for this stream.
-          return;
-        }
       }
     }
 
