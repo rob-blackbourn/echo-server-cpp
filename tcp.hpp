@@ -8,6 +8,4 @@
 #include "tcp_stream.hpp"
 #include "tcp_buffered_stream.hpp"
 
-#include "tcp_server.hpp"
-
 #endif // JETBLACK_NET_TCP_HPP

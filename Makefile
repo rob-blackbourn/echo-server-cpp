@@ -9,7 +9,6 @@ SERVER_HPP = \
 	tcp_server_socket.hpp \
 	tcp_stream.hpp \
 	tcp_buffered_stream.hpp \
-	tcp_server.hpp \
 	poll_handler.hpp \
 	poller.hpp \
 	tcp_server_socket_poll_handler.hpp \
