@@ -11,17 +11,17 @@ int main(int argc, char** argv)
 {
   const uint16_t port = 22000;
 
-  auto server = tcp_server(
+  auto server = TcpServer(
     port,
-    [](tcp_server&, const tcp_server::stream_pointer& stream)
+    [](TcpServer&, const TcpServer::stream_pointer& stream)
     {
       spdlog::info("on_open: {}", stream->socket->fd());
     },
-    [](tcp_server&, const tcp_server::stream_pointer& stream)
+    [](TcpServer&, const TcpServer::stream_pointer& stream)
     {
       spdlog::info("on_close: {}", stream->socket->fd());
     },
-    [](tcp_server& server, const tcp_server::stream_pointer& stream, std::optional<std::exception> error)
+    [](TcpServer& server, const TcpServer::stream_pointer& stream, std::optional<std::exception> error)
     {
       spdlog::info("on_read: {}", stream->socket->fd());
 
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
         }
       }
     },
-    [](tcp_server&, const tcp_server::stream_pointer& stream, std::optional<std::exception> error)
+    [](TcpServer&, const TcpServer::stream_pointer& stream, std::optional<std::exception> error)
     {
       spdlog::info("on_write: {}", stream->socket->fd());
 

@@ -20,15 +20,15 @@
 
 namespace jetblack::net
 {
-  class tcp_client_socket :public tcp_socket
+  class TcpClientSocket :public TcpSocket
   {
   public:
-    tcp_client_socket()
-      : tcp_socket()
+    TcpClientSocket()
+      : TcpSocket()
     {
     }
 
-    tcp_client_socket(int) = delete;
+    TcpClientSocket(int) = delete;
 
     void connect(const sockaddr_in& address)
     {

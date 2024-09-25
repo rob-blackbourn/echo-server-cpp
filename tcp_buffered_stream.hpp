@@ -12,7 +12,7 @@
 namespace jetblack::net
 {
   
-  class tcp_buffered_stream : public tcp_stream
+  class TcpBufferedStream : public TcpStream
   {
   private:
     std::deque<buffer_type> read_queue_;
@@ -22,11 +22,11 @@ namespace jetblack::net
     const std::size_t read_bufsiz;
     const std::size_t write_bufsiz;
 
-    tcp_buffered_stream(
-      std::shared_ptr<tcp_socket> socket,
+    TcpBufferedStream(
+      std::shared_ptr<TcpSocket> socket,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : tcp_stream(socket),
+      : TcpStream(socket),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {

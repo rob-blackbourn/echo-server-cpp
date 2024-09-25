@@ -11,7 +11,7 @@ int main()
 
   try
   {
-    auto socket = tcp_client_socket();
+    auto socket = TcpClientSocket();
     socket.connect(host, port);
 
     while (1)

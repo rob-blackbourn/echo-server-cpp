@@ -19,18 +19,18 @@
 namespace jetblack::net
 {
 
-  class tcp_listener_socket : public tcp_socket
+  class TcpListenerSocket : public TcpSocket
   {
   public:
-    typedef std::shared_ptr<tcp_server_socket> client_pointer;
+    typedef std::shared_ptr<TcpServerSocket> client_pointer;
 
   public:
-    tcp_listener_socket()
-      : tcp_socket()
+    TcpListenerSocket()
+      : TcpSocket()
     {
     }
 
-    tcp_listener_socket(int) = delete;
+    TcpListenerSocket(int) = delete;
 
     void bind(uint16_t port) {
       uint32_t addr = htonl(INADDR_ANY);
@@ -92,7 +92,7 @@ namespace jetblack::net
       }
       uint16_t port = ntohs(clientaddr.sin_port);
 
-      return std::make_shared<tcp_server_socket>(client_fd, address, port);
+      return std::make_shared<TcpServerSocket>(client_fd, address, port);
     }
   };
 

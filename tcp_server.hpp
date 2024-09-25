@@ -19,25 +19,25 @@
 namespace jetblack::net
 {
 
-  class tcp_server
+  class TcpServer
   {
   public:
-    typedef tcp_buffered_stream stream_type;
+    typedef TcpBufferedStream stream_type;
     typedef std::shared_ptr<stream_type> stream_pointer;
     typedef std::map<int, stream_pointer> stream_map;
-    typedef std::function<void(tcp_server&, const stream_pointer&)> stream_connection;
-    typedef std::function<void(tcp_server&, const stream_pointer&, std::optional<std::exception>)> stream_io;
+    typedef std::function<void(TcpServer&, const stream_pointer&)> stream_connection;
+    typedef std::function<void(TcpServer&, const stream_pointer&, std::optional<std::exception>)> stream_io;
     
   private:
     std::map<int, stream_pointer> streams_;
-    tcp_listener_socket listener_;
+    TcpListenerSocket listener_;
     std::optional<stream_connection> on_open_;
     std::optional<stream_connection> on_close_;
     std::optional<stream_io> on_read_;
     std::optional<stream_io> on_write_;
 
   public:
-    tcp_server(
+    TcpServer(
       uint16_t port,
       const std::optional<stream_connection> on_open = std::nullopt,
       const std::optional<stream_connection> on_close = std::nullopt,
@@ -183,7 +183,7 @@ namespace jetblack::net
       auto client = listener_.accept();
       client->blocking(false);
 
-      auto stream = std::make_shared<tcp_buffered_stream>(client, 8096, 8096);
+      auto stream = std::make_shared<TcpBufferedStream>(client, 8096, 8096);
       streams_[client->fd()] = stream;
       raise(on_open_, stream);
     }

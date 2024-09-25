@@ -14,14 +14,14 @@
 namespace jetblack::net
 {
 
-  class tcp_socket
+  class TcpSocket
   {
   protected:
     int fd_;
     bool is_open_ { true };
 
   public:
-    explicit tcp_socket()
+    explicit TcpSocket()
       : fd_(socket(AF_INET, SOCK_STREAM, 0))
     {
       if (fd_ == -1) {
@@ -30,12 +30,12 @@ namespace jetblack::net
       }
     }
 
-    explicit tcp_socket(int fd) noexcept
+    explicit TcpSocket(int fd) noexcept
       : fd_(fd)
     {
     }
 
-    tcp_socket(const tcp_socket&) = delete;
+    TcpSocket(const TcpSocket&) = delete;
 
     int fd() const noexcept { return fd_; }
 

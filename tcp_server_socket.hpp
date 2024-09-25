@@ -9,15 +9,15 @@
 namespace jetblack::net
 {
 
-  class tcp_server_socket : public tcp_socket
+  class TcpServerSocket : public TcpSocket
   {
   private:
     std::string address_;
     std::uint16_t port_;
 
   public:
-    tcp_server_socket(int fd, const std::string& address, std::uint16_t port) noexcept
-      : tcp_socket(fd)
+    TcpServerSocket(int fd, const std::string& address, std::uint16_t port) noexcept
+      : TcpSocket(fd)
       , address_(address)
       , port_(port)
     {

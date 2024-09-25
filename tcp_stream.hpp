@@ -25,14 +25,14 @@ namespace jetblack::net
   struct eof {};
   struct blocked {};
 
-  class tcp_stream
+  class TcpStream
   {
   public:
-    typedef std::shared_ptr<tcp_socket> socket_pointer;
+    typedef std::shared_ptr<TcpSocket> socket_pointer;
     typedef std::vector<char> buffer_type;
 
   public:
-    tcp_stream(socket_pointer socket) noexcept
+    TcpStream(socket_pointer socket) noexcept
       : socket(socket)
     {
     }
