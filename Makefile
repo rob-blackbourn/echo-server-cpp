@@ -1,6 +1,6 @@
 CXX = clang++
 CXXFLAGS = -g -std=c++23 -Wall
-LDLIBS = -lspdlog -lfmt
+LDLIBS = -lspdlog -lfmt -lssl -lcrypto
 
 SERVER_HPP = \
 	tcp.hpp \

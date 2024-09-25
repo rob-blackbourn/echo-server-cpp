@@ -53,7 +53,7 @@ int main(int argc, char** argv)
         spdlog::info("on_error: {}, {}", fd, error.what());
       }
     );
-    poller.add_handler(std::make_shared<TcpListenerSocketPollHandler>(port));
+    poller.add_handler(std::make_unique<TcpListenerSocketPollHandler>(port));
     poller.event_loop();
   }
   catch(const std::exception& error)

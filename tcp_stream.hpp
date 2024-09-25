@@ -8,6 +8,10 @@
 #include <sys/types.h>
 #include <unistd.h>
 
+#include <openssl/ssl.h>
+#include <openssl/err.h>
+#include <openssl/bio.h>
+
 #include <cerrno>
 #include <memory>
 #include <optional>
@@ -16,6 +20,7 @@
 #include <system_error>
 #include <variant>
 #include <vector>
+#include <utility>
 
 #include "tcp_socket.hpp"
 
@@ -28,12 +33,12 @@ namespace jetblack::net
   class TcpStream
   {
   public:
-    typedef std::shared_ptr<TcpSocket> socket_pointer;
+    typedef std::unique_ptr<TcpSocket> socket_pointer;
     typedef std::vector<char> buffer_type;
 
   public:
     TcpStream(socket_pointer socket) noexcept
-      : socket(socket)
+      : socket(std::move(socket))
     {
     }
 

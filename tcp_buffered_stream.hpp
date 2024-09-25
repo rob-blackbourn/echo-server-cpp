@@ -23,10 +23,10 @@ namespace jetblack::net
     const std::size_t write_bufsiz;
 
     TcpBufferedStream(
-      std::shared_ptr<TcpSocket> socket,
+      std::unique_ptr<TcpSocket> socket,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : TcpStream(socket),
+      : TcpStream(std::move(socket)),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {

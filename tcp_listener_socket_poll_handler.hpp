@@ -54,7 +54,7 @@ namespace jetblack::net
       auto client = listener_.accept();
       client->blocking(false);
 
-      poller.add_handler(std::static_pointer_cast<PollHandler>(std::make_shared<TcpServerSocketPollHandler>(client, 8096, 8096)));
+      poller.add_handler(std::make_unique<TcpServerSocketPollHandler>(std::move(client), 8096, 8096));
 
       return true;
     }

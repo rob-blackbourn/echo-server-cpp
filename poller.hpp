@@ -9,6 +9,7 @@
 #include <memory>
 #include <optional>
 #include <stdexcept>
+#include <utility>
 
 #include "tcp_socket.hpp"
 #include "tcp_listener_socket.hpp"
@@ -23,7 +24,7 @@ namespace jetblack::net
   class Poller
   {
   public:
-    typedef std::shared_ptr<PollHandler> handler_pointer;
+    typedef std::unique_ptr<PollHandler> handler_pointer;
     typedef std::map<int, handler_pointer> handler_map;
     typedef std::function<void(Poller&, int fd)> connection_callback;
     typedef std::function<void(Poller&, int fd, std::vector<std::vector<char>> bufs)> read_callback;
@@ -49,11 +50,13 @@ namespace jetblack::net
     {
     }
 
-    void add_handler(std::shared_ptr<PollHandler> handler) noexcept
+    void add_handler(handler_pointer handler) noexcept
     {
-      handlers_[handler->fd()] = handler;
-      if (!handler->is_listener())
-        on_open_(*this, handler->fd());
+      auto fd = handler->fd();
+      auto is_listener = handler->is_listener();
+      handlers_[fd] = std::move(handler);
+      if (!is_listener)
+        on_open_(*this, fd);
     }
 
     void write(int fd, std::vector<char> buf) noexcept
@@ -95,7 +98,7 @@ namespace jetblack::net
 
     void handle_event(const pollfd& poll_state)
     {
-      auto handler = handlers_[poll_state.fd];
+      auto handler = handlers_[poll_state.fd].get();
 
       if ((poll_state.revents & POLLIN) == POLLIN)
       {
@@ -116,7 +119,7 @@ namespace jetblack::net
       }
     }
 
-    bool handle_read(const handler_pointer& handler) noexcept
+    bool handle_read(PollHandler* handler) noexcept
     {
       try
       {
@@ -141,7 +144,7 @@ namespace jetblack::net
       }
     }
 
-    bool handle_write(const handler_pointer& handler) noexcept
+    bool handle_write(PollHandler* handler) noexcept
     {
       try
       {
@@ -193,7 +196,7 @@ namespace jetblack::net
 
       for (auto fd : closed_fds)
       {
-        auto handler = handlers_[fd];
+        auto handler = std::move(handlers_[fd]);
         handlers_.erase(fd);
         if (!handler->is_listener())
           on_close_(*this, handler->fd());
