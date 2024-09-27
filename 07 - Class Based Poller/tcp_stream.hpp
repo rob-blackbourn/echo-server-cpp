@@ -8,10 +8,6 @@
 #include <sys/types.h>
 #include <unistd.h>
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
-
 #include <cerrno>
 #include <memory>
 #include <optional>
