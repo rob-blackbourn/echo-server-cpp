@@ -35,53 +35,63 @@ namespace jetblack::net
   public:
     typedef std::unique_ptr<TcpSocket> socket_pointer;
 
+  private:
+    BIO* bio_;
+
+  public:
+    socket_pointer socket;
+
   public:
     TcpStream(socket_pointer socket) noexcept
-      : socket(std::move(socket))
+      : bio_(BIO_new_socket(socket->fd(), BIO_NOCLOSE)),
+        socket(std::move(socket))
     {
     }
-
-    socket_pointer socket;
+    ~TcpStream()
+    {
+      BIO_free_all(bio_);
+    }
 
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
     {
       std::vector<char> buf(len);
-      int result = ::read(socket->fd(), buf.data(), len);
-      if (result == -1) {
-        // Check if it's flow control.
-        if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
-          // Not a flow control error; the socket has faulted.
+
+      std::size_t nbytes_read;
+      int result = BIO_read_ex(bio_, buf.data(), len, &nbytes_read);
+      if (result == 0) {
+        // Check if we can retry.
+        if (!(BIO_should_retry(bio_))) {
+          // The socket has faulted.
           socket->is_open(false);
-          throw std::system_error(
-            errno, std::generic_category(), "client socket failed to read");
+          return eof {};
         }
 
         // The socket is ok, but nothing has been read due to blocking.
         return blocked {};
       }
 
-      if (result == 0) {
+      if (nbytes_read == 0) {
         // A read of zero bytes indicates socket has closed.
         socket->is_open(false);
         return eof {};
       }
 
       // Data has been read successfully. Resize the buffer and return.
-      buf.resize(result);
+      buf.resize(nbytes_read);
       return buf;
     }
 
-    std::variant<ssize_t, eof, blocked> write(const std::span<char>& buf)
+    std::variant<std::size_t, eof, blocked> write(const std::span<char>& buf)
     {
-      int result = ::write(socket->fd(), buf.data(), buf.size());
-      if (result == -1)
+      std::size_t nbytes_written;
+      int result = BIO_write_ex(bio_, buf.data(), buf.size(), &nbytes_written);
+      if (result == 0)
       {
         // Check if it's flow control.
-        if (!(errno == EAGAIN || errno == EWOULDBLOCK)) {
+        if (!BIO_should_retry(bio_)) {
           // Not flow control; the socket has faulted.
           socket->is_open(false);
-          throw std::system_error(
-            errno, std::generic_category(), "client socket failed to write");
+          throw std::runtime_error("failed to write");
         }
 
         // The socket is ok, but nothing has been written due to blocking.
@@ -96,7 +106,7 @@ namespace jetblack::net
       }
 
       // return the number of bytes that were written.
-      return result;
+      return nbytes_written;
     }
   };
 
