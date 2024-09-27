@@ -1,4 +1,1 @@
 *.o
-chat-server
-echo-server
-client

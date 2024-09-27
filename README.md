@@ -1,6 +1,10 @@
-# echo-server
+# Echo Servers in C++
 
-## Installation
+A variety of implementations of echo servers in C++.
+
+These were developed on Ubuntu 24.04 using C++17/20/23.
+
+## Requirements
 
 This project uses the spdlog logging library with fmt.
 
