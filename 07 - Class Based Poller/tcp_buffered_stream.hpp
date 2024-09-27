@@ -7,6 +7,7 @@
 #include <utility>
 
 #include "match.hpp"
+#include "tcp_socket.hpp"
 #include "tcp_stream.hpp"
 
 namespace jetblack::net
@@ -15,8 +16,8 @@ namespace jetblack::net
   class TcpBufferedStream : public TcpStream
   {
   private:
-    std::deque<buffer_type> read_queue_;
-    std::deque<std::pair<buffer_type, std::size_t>> write_queue_;
+    std::deque<std::vector<char>> read_queue_;
+    std::deque<std::pair<std::vector<char>, std::size_t>> write_queue_;
 
   public:
     const std::size_t read_bufsiz;
@@ -34,7 +35,7 @@ namespace jetblack::net
 
     bool has_reads() const noexcept { return !read_queue_.empty(); }
 
-    buffer_type deque_read() noexcept
+    std::vector<char> deque_read() noexcept
     {
       auto buf { std::move(read_queue_.front()) };
       read_queue_.pop_front();
@@ -57,7 +58,7 @@ namespace jetblack::net
             return false;
           },
 
-          [&](buffer_type&& buf) mutable
+          [&](std::vector<char>&& buf) mutable
           {
             read_queue_.push_back(std::move(buf));
             return socket->is_open();
@@ -71,7 +72,7 @@ namespace jetblack::net
 
     bool has_writes() const noexcept { return !write_queue_.empty(); }
 
-    void enqueue_write(buffer_type buf)
+    void enqueue_write(std::vector<char> buf)
     {
       write_queue_.push_back(std::make_pair(std::move(buf), 0));
     }

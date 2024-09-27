@@ -4,11 +4,10 @@
 #include <poll.h>
 
 #include <deque>
-#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
-#include <stdexcept>
+#include <vector>
 
 #include "tcp_socket.hpp"
 #include "tcp_listener_socket.hpp"
@@ -25,9 +24,8 @@ namespace jetblack::net
   {
   private:
     TcpStream stream_;
-    typedef TcpStream::buffer_type buffer_type;
-    std::deque<buffer_type> read_queue_;
-    std::deque<std::pair<buffer_type, std::size_t>> write_queue_;
+    std::deque<std::vector<char>> read_queue_;
+    std::deque<std::pair<std::vector<char>, std::size_t>> write_queue_;
 
   public:
     const std::size_t read_bufsiz;
@@ -68,7 +66,7 @@ namespace jetblack::net
             return false;
           },
 
-          [&](buffer_type&& buf) mutable
+          [&](std::vector<char>&& buf) mutable
           {
             read_queue_.push_back(std::move(buf));
             return stream_.socket->is_open();

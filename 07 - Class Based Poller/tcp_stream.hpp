@@ -34,7 +34,6 @@ namespace jetblack::net
   {
   public:
     typedef std::unique_ptr<TcpSocket> socket_pointer;
-    typedef std::vector<char> buffer_type;
 
   public:
     TcpStream(socket_pointer socket) noexcept
@@ -44,9 +43,9 @@ namespace jetblack::net
 
     socket_pointer socket;
 
-    std::variant<buffer_type, eof, blocked> read(std::size_t len)
+    std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
     {
-      buffer_type buf(len);
+      std::vector<char> buf(len);
       int result = ::read(socket->fd(), buf.data(), len);
       if (result == -1) {
         // Check if it's flow control.
