@@ -1,0 +1,4 @@
+*.o
+address_for_name
+name_for_address
+names
