@@ -7,20 +7,24 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <optional>
-#include <stdexcept>
+#include <system_error>
 #include <utility>
-
-#include "tcp_socket.hpp"
-#include "tcp_listener_socket.hpp"
-#include "tcp_stream.hpp"
-
-#include "match.hpp"
 
 #include "poll_handler.hpp"
 
 namespace jetblack::net
 {
+  inline int poll(std::vector<pollfd> &fds)
+  {
+    int active_fd_count = ::poll(fds.data(), fds.size(), -1);
+    if (active_fd_count < 0)
+    {
+      throw std::system_error(
+        errno, std::generic_category(), "poll failed");
+    }
+    return active_fd_count;
+  }
+
   class Poller
   {
   public:
