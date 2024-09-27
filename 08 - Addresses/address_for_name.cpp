@@ -4,6 +4,7 @@
 #include <netdb.h>
 #include <unistd.h>
 
+#include <charconv>
 #include <cstdint>
 #include <cstring>
 #include <iostream>
