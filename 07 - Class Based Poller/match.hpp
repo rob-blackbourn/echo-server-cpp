@@ -1,6 +1,8 @@
 #ifndef JETBLACK_NET_MATCH_HPP
 #define JETBLACK_NET_MATCH_HPP
 
+// For rust style matching with variants.
+
 namespace jetblack::net
 {
   
