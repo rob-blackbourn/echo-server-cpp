@@ -4,6 +4,8 @@
 #include <utility>
 #include <variant>
 
+#include <spdlog/spdlog.h>
+
 #include "tcp_client_socket.hpp"
 #include "tcp_stream.hpp"
 
@@ -39,6 +41,8 @@ int main(int argc, char** argv)
 		    std::cout << op.help(popl::Attribute::expert) << "\n";
       exit(1);
     }
+
+    spdlog::info("connecting to host {} on port {}.", host, port);
 
     auto socket = std::make_unique<TcpClientSocket>();
     socket->connect(host, port);

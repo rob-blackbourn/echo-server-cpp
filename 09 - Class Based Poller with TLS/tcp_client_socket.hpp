@@ -17,6 +17,7 @@
 #include <system_error>
 
 #include "tcp_socket.hpp"
+#include "tcp_address.hpp"
 
 namespace jetblack::net
 {
@@ -52,37 +53,12 @@ namespace jetblack::net
 
     void connect(const std::string& host, std::uint16_t port)
     {
-      char port_str[6];
-      std::memset(port_str, 0, sizeof(port_str));
-      auto res = std::to_chars(port_str, port_str + sizeof(port_str) - 1, port);
-      if (res.ec != std::errc{})
+      auto addresses = getaddrinfo_inet4(host, port);
+      if (addresses.empty())
       {
-          throw std::system_error(std::make_error_code(res.ec));
+        throw std::runtime_error("failed to resolve address");
       }
-
-      addrinfo hints {
-          .ai_flags = 0,
-          .ai_family = AF_INET,
-          .ai_socktype = SOCK_STREAM,
-          .ai_protocol = IPPROTO_TCP,
-          .ai_addrlen = 0,
-          .ai_addr = nullptr,
-          .ai_canonname = nullptr,
-          .ai_next = nullptr
-      };
-      addrinfo* info;
-      int result = getaddrinfo(host.c_str(), port_str, &hints, &info);
-      if (result != 0)
-      {
-          throw std::runtime_error(gai_strerror(result));
-      }
-
-      sockaddr_in addr;
-      std::memcpy(&addr, info->ai_addr, info->ai_addrlen);
-
-      freeaddrinfo(info);
-
-      connect(addr);
+      connect(addresses.front());
     }
 
   };
