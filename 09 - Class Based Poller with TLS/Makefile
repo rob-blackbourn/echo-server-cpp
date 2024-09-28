@@ -1,5 +1,5 @@
 CXX = clang++
-CXXFLAGS = -g -std=c++23 -Wall
+CXXFLAGS = -g -std=c++23 -Wall -I../external
 LDLIBS = -lspdlog -lfmt -lssl -lcrypto
 
 SERVER_HPP = \
