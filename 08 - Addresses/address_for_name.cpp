@@ -113,6 +113,9 @@ std::vector<sockaddr_in> getaddrinfo_inet4(const std::string& host, std::uint16_
 
 void example2(const std::string& host, std::uint16_t port)
 {
+    std::string host = "yahoo.com";
+    std::uint16_t port = 443;
+
     auto addresses = getaddrinfo_inet4(host, port);
     std::cout << "Address for " << host  << " on port " << port << std::endl;
     for (const auto& address : addresses)
@@ -123,7 +126,6 @@ int main()
 {
     // example1();
     example2("yahoo.com", 443);
-    example2("192.168.1.1", 443);
 
     return 0;
 }
