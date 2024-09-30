@@ -34,7 +34,7 @@ int main(int argc, char** argv)
 
   try
   {
-    spdlog::info("starting echo server on port {}.", port);
+    spdlog::info("starting echo server on port {}.", static_cast<int>(port));
 
     op.parse(argc, argv);
 
