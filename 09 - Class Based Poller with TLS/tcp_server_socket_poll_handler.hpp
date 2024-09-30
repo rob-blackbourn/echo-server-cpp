@@ -13,6 +13,8 @@
 #include "tcp_listener_socket.hpp"
 #include "tcp_stream.hpp"
 
+#include "ssl_ctx.hpp"
+
 #include "match.hpp"
 
 #include "poll_handler.hpp"
@@ -33,9 +35,10 @@ namespace jetblack::net
 
     TcpServerSocketPollHandler(
       std::unique_ptr<TcpSocket> socket,
+      std::optional<std::shared_ptr<SslContext>> ssl_ctx,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : stream_(std::move(socket)),
+      : stream_(std::move(socket), ssl_ctx),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {

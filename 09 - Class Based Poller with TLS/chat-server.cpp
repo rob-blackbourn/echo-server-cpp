@@ -6,17 +6,67 @@
 #include "tcp.hpp"
 #include "poller.hpp"
 #include "tcp_listener_socket_poll_handler.hpp"
+#include "ssl_ctx.hpp"
 #include "utils.hpp"
+
+#include "external/popl.hpp"
 
 using namespace jetblack::net;
 
+std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
+{
+  auto ctx = std::make_shared<SslServerContext>();
+  ctx->use_certificate_file(certfile);
+  ctx->use_private_key_file(keyfile);
+  return ctx;
+}
+
 int main(int argc, char** argv)
 {
-  const uint16_t port = 22000;
+  bool use_tls = false;
+  uint16_t port = 22000;
+  popl::OptionParser op("options");
+  op.add<popl::Switch>("s", "ssl", "Connect with TLS", &use_tls);
+  auto help_option = op.add<popl::Switch>("", "help", "produce help message");
+  op.add<popl::Value<decltype(port)>>("p", "port", "port number", port, &port);
+  auto certfile_option = op.add<popl::Value<std::string>>("c", "certfile", "path to certificate file");
+  auto keyfile_option = op.add<popl::Value<std::string>>("k", "keyfile", "path to key file");
 
   try
   {
     spdlog::info("starting chat server on port {}.", port);
+
+    op.parse(argc, argv);
+
+    if (help_option->is_set())
+    {
+      if (help_option->count() == 1)
+    		std::cout << op << "\n";
+	    else if (help_option->count() == 2)
+		    std::cout << op.help(popl::Attribute::advanced) << "\n";
+	    else
+		    std::cout << op.help(popl::Attribute::expert) << "\n";
+      exit(1);
+    }
+
+    std::optional<std::shared_ptr<SslContext>> ssl_ctx;
+
+    if (use_tls)
+    {
+      if (!certfile_option->is_set())
+      {
+        std::cout << "For ssl must use certfile" << std::endl;
+    		std::cout << op << "\n";
+        exit(1);
+      }
+      if (!keyfile_option->is_set())
+      {
+        std::cout << "For ssl must use keyfile" << std::endl;
+    		std::cout << op << "\n";
+        exit(1);
+      }
+      ssl_ctx = make_ssl_context(certfile_option->value(), keyfile_option->value());
+    }
 
     std::set<int> clients;
 
@@ -53,7 +103,7 @@ int main(int argc, char** argv)
         spdlog::info("on_error: {}, {}", fd, error.what());
       }
     );
-    poller.add_handler(std::make_unique<TcpListenerSocketPollHandler>(port));
+    poller.add_handler(std::make_unique<TcpListenerSocketPollHandler>(port, ssl_ctx));
     poller.event_loop();
   }
   catch(const std::exception& error)

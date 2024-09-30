@@ -23,6 +23,7 @@
 #include <utility>
 
 #include "tcp_socket.hpp"
+#include "ssl_ctx.hpp"
 
 namespace jetblack::net
 {
@@ -33,17 +34,20 @@ namespace jetblack::net
   class TcpStream
   {
   public:
-    typedef std::unique_ptr<TcpSocket> socket_pointer;
+    typedef std::shared_ptr<TcpSocket> socket_pointer;
 
   private:
     BIO* bio_;
+    std::optional<std::shared_ptr<SslContext>> ssl_ctx_;
+
 
   public:
     socket_pointer socket;
 
   public:
-    TcpStream(socket_pointer socket) noexcept
+    TcpStream(socket_pointer socket, std::optional<std::shared_ptr<SslContext>> ssl_ctx) noexcept
       : bio_(BIO_new_socket(socket->fd(), BIO_NOCLOSE)),
+        ssl_ctx_(ssl_ctx),
         socket(std::move(socket))
     {
     }

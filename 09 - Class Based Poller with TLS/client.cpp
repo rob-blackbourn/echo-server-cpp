@@ -1,5 +1,6 @@
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <span>
 #include <utility>
 #include <variant>
@@ -8,6 +9,7 @@
 
 #include "tcp_client_socket.hpp"
 #include "tcp_stream.hpp"
+#include "ssl_ctx.hpp"
 
 #include "external/popl.hpp"
 
@@ -16,16 +18,34 @@
 
 using namespace jetblack::net;
 
+std::shared_ptr<SslContext> make_ssl_context(std::optional<std::string> capath)
+{
+  auto ctx = std::make_shared<SslClientContext>();
+  if (capath.has_value())
+  {
+    ctx->load_verify_locations(capath.value());
+  }
+  else
+  {
+    ctx->set_default_verify_paths();
+  }
+  ctx->verify();
+
+  return ctx;
+}
+
 int main(int argc, char** argv)
 {
-  popl::OptionParser op("options");
   bool use_tls = false;
+  std::uint16_t port = 22000;
+  std::string host = "localhost";
+
+  popl::OptionParser op("options");
   op.add<popl::Switch>("s", "ssl", "Connect with TLS", &use_tls);
   auto help_option = op.add<popl::Switch>("", "help", "produce help message");
-  std::uint16_t port = 22000;
   op.add<popl::Value<decltype(port)>>("p", "port", "port number", port, &port);
-  std::string host = "localhost";
   op.add<popl::Value<decltype(host)>>("h", "host", "host name or ip address (use fqdn for tls)", host, &host);
+  auto capath_option = op.add<popl::Value<std::string>>("", "capath", "path to certificate authority bundle file");
 
   try
   {
@@ -42,12 +62,22 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-    spdlog::info("connecting to host {} on port {}.", host, port);
+    std::optional<std::shared_ptr<SslContext>> ssl_ctx;
+    
+    if (use_tls)
+    {
+      std::optional<std::string> capath;
+      if (capath_option->is_set())
+        capath = capath_option->value();
+      ssl_ctx = make_ssl_context(capath);
+    }
+
+    spdlog::info("connecting to host {} on port {}{}.", host, port, use_tls ? " using tls" : "");
 
     auto socket = std::make_unique<TcpClientSocket>();
     socket->connect(host, port);
 
-    auto stream = TcpStream(std::move(socket));
+    auto stream = TcpStream(std::move(socket), ssl_ctx);
 
     while (1)
     {

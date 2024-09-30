@@ -25,10 +25,15 @@ namespace jetblack::net
   class TcpListenerSocketPollHandler : public PollHandler
   {
   private:
+    std::optional<std::shared_ptr<SslContext>> ssl_ctx_;
     TcpListenerSocket listener_;
 
   public:
-    TcpListenerSocketPollHandler(uint16_t port, int backlog = 10)
+    TcpListenerSocketPollHandler(
+      uint16_t port,
+      std::optional<std::shared_ptr<SslContext>> ssl_ctx = std::nullopt,
+      int backlog = 10)
+      : ssl_ctx_ { ssl_ctx }
     {
       listener_.bind(port);
       listener_.blocking(false);
@@ -54,7 +59,7 @@ namespace jetblack::net
       auto client = listener_.accept();
       client->blocking(false);
 
-      poller.add_handler(std::make_unique<TcpServerSocketPollHandler>(std::move(client), 8096, 8096));
+      poller.add_handler(std::make_unique<TcpServerSocketPollHandler>(std::move(client), ssl_ctx_, 8096, 8096));
 
       return true;
     }
