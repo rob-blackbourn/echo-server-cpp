@@ -92,48 +92,12 @@ namespace jetblack::net
       }
 
       int error = SSL_get_error(ssl_, ret);
-      switch (error)
+      if (error == SSL_ERROR_WANT_READ || error == SSL_ERROR_WANT_WRITE)
       {
-      case SSL_ERROR_NONE:
-        std::cerr << "ssl error NONE" << std::endl;
         return false;
-      case SSL_ERROR_ZERO_RETURN:
-        std::cerr << "ssl error ZERO RETURN" << std::endl;
-        return false;
-      case SSL_ERROR_WANT_READ:
-        std::cerr << "ssl error WANT READ" << std::endl;
-        return false;
-      case SSL_ERROR_WANT_WRITE:
-        std::cerr << "ssl error WANT WRITE" << std::endl;
-        return false;
-      case SSL_ERROR_WANT_CONNECT:
-        std::cerr << "ssl error WANT CONNECT" << std::endl;
-        throw std::runtime_error("ssl want connect");
-      case SSL_ERROR_WANT_ACCEPT:
-        std::cerr << "ssl error WANT ACCEPT" << std::endl;
-        throw std::runtime_error("ssl want connect");
-      case SSL_ERROR_WANT_X509_LOOKUP:
-        std::cerr << "ssl error WANT X509 lookup" << std::endl;
-        throw std::runtime_error("ssl want X509 lookup");
-      case SSL_ERROR_WANT_ASYNC:
-        std::cerr << "ssl error WANT ASYNC" << std::endl;
-        throw std::runtime_error("ssl want async");
-      case SSL_ERROR_WANT_ASYNC_JOB:
-        std::cerr << "ssl error WANT ASYNC JOB" << std::endl;
-        throw std::runtime_error("ssl want async job");
-      case SSL_ERROR_WANT_CLIENT_HELLO_CB:
-        std::cerr << "ssl error WANT CLIENT HELLO CB" << std::endl;
-        throw std::runtime_error("ssl want client hello cb");
-      case SSL_ERROR_SYSCALL:
-        std::cerr << "ssl error SYSCALL" << std::endl;
-        throw std::runtime_error("ssl syscall");
-      case SSL_ERROR_SSL:
-        std::cerr << "ssl error SSL" << std::endl;
-        throw std::runtime_error("ssl error");
-      default:
-        std::cerr << "ssl error unknown" << std::endl;
-        throw std::runtime_error("ssl error unknown");
       }
+
+      throw std::runtime_error("ssl handshake failed");
     }
 
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
