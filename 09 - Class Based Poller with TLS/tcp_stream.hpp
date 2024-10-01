@@ -76,25 +76,22 @@ namespace jetblack::net
 
     bool do_handshake()
     {
-      std::cerr << "do_handshake" << std::endl;
       if (ssl_ == nullptr || handshake_done)
       {
-        std::cerr << "not required" << std::endl;
-        return true;
+        return true; // continue processing reads.
       }
 
       int ret = SSL_do_handshake(ssl_);
       if (ret == 1)
       {
-        std::cerr << "ssl handshake done" << std::endl;
         handshake_done = true;
-        return true;
+        return true;  // continue processing reads.
       }
 
       int error = SSL_get_error(ssl_, ret);
       if (error == SSL_ERROR_WANT_READ || error == SSL_ERROR_WANT_WRITE)
       {
-        return false;
+        return false; // Wait for next io event.
       }
 
       throw std::runtime_error("ssl handshake failed");
