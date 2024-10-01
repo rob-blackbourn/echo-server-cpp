@@ -38,7 +38,7 @@ namespace jetblack::net
       std::optional<std::shared_ptr<SslContext>> ssl_ctx,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : stream_(std::move(socket), ssl_ctx),
+      : stream_(std::move(socket), ssl_ctx, false),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {
@@ -50,8 +50,8 @@ namespace jetblack::net
     bool is_listener() const noexcept override { return false; }
     int fd() const noexcept override { return stream_.socket->fd(); }
     bool is_open() const noexcept override { return stream_.socket->is_open(); }
-    bool want_read() const noexcept override { return stream_.socket->is_open(); }
-    bool want_write() const noexcept override { return stream_.socket->is_open() && !write_queue_.empty(); }
+    bool want_read() const noexcept override { return is_open() || stream_.want_read(); }
+    bool want_write() const noexcept override { return is_open() && (!write_queue_.empty() || stream_.want_write()); }
 
     bool read(Poller& poller) noexcept override
     {

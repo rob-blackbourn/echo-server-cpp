@@ -38,6 +38,8 @@ namespace jetblack::net
       other.ctx_ = nullptr;
       return *this;
     }
+
+    SSL_CTX* ptr() { return ctx_; }
   };
 
   class SslClientContext : public SslContext
