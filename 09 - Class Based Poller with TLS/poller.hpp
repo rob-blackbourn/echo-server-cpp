@@ -137,7 +137,10 @@ namespace jetblack::net
           buf = handler->dequeue();
         }
 
-        on_read_(*this, handler->fd(), bufs);
+        if (!bufs.empty())
+        {
+          on_read_(*this, handler->fd(), bufs);
+        }
 
         return can_continue;
       }
