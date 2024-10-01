@@ -5,6 +5,30 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "client",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/09 - Class Based Poller with TLS/client",
+            "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
             "name": "echo-server",
             "type": "cppdbg",
             "request": "launch",
@@ -34,6 +58,89 @@
             "request": "launch",
             "program": "${workspaceFolder}/09 - Class Based Poller with TLS/chat-server",
             "args": [],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "ssl client",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/09 - Class Based Poller with TLS/client",
+            "args": [
+                "--ssl",
+                "--host", "beast.jetblack.net"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "ssl echo-server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/09 - Class Based Poller with TLS/echo-server",
+            "args": [
+                "--ssl",
+                "--certfile", "${env:HOME}/.keys/server.crt",
+                "--keyfile", "${env:HOME}/.keys/server.key"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "Enable pretty-printing for gdb",
+                    "text": "-enable-pretty-printing",
+                    "ignoreFailures": true
+                },
+                {
+                    "description": "Set Disassembly Flavor to Intel",
+                    "text": "-gdb-set disassembly-flavor intel",
+                    "ignoreFailures": true
+                }
+            ]
+        },
+        {
+            "name": "ssl chat-server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/09 - Class Based Poller with TLS/chat-server",
+            "args": [
+                "--ssl",
+                "--certfile", "${env:HOME}/.keys/server.crt",
+                "--keyfile", "${env:HOME}/.keys/server.key"
+            ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
             "environment": [],
