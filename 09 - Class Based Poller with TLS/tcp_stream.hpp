@@ -45,7 +45,10 @@ namespace jetblack::net
     socket_pointer socket;
 
   public:
-    TcpStream(socket_pointer socket, std::optional<std::shared_ptr<SslContext>> ssl_ctx, bool is_client) noexcept
+    TcpStream(
+      socket_pointer socket,
+      std::optional<std::shared_ptr<SslContext>> ssl_ctx,
+      bool is_client) noexcept
       : bio_(BIO_new_socket(socket->fd(), BIO_NOCLOSE)),
         socket(std::move(socket))
     {
@@ -63,7 +66,9 @@ namespace jetblack::net
     }
     ~TcpStream()
     {
-      BIO_free_all(bio_);
+      BIO_free_all(bio_); // This should free bio and ssl.
+      bio_ = nullptr;
+      ssl_ = nullptr;
     }
 
     bool want_read() const noexcept { return BIO_should_read(bio_); }
