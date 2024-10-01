@@ -26,10 +26,10 @@ namespace jetblack::net
     TcpBufferedStream(
       std::unique_ptr<TcpSocket> socket,
       std::shared_ptr<SslContext> ssl_ctx,
-      bool is_client,
+      std::optional<std::string> server_name,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : TcpStream(std::move(socket), ssl_ctx, is_client),
+      : TcpStream(std::move(socket), ssl_ctx, server_name),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {

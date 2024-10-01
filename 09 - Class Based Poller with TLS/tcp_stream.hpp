@@ -48,7 +48,7 @@ namespace jetblack::net
     TcpStream(
       socket_pointer socket,
       std::optional<std::shared_ptr<SslContext>> ssl_ctx,
-      bool is_client) noexcept
+      std::optional<std::string> server_name)
       : bio_(BIO_new_socket(socket->fd(), BIO_NOCLOSE)),
         socket(std::move(socket))
     {
@@ -58,10 +58,23 @@ namespace jetblack::net
       }
       else
       {
-        BIO* ssl_bio = BIO_new_ssl(ssl_ctx.value()->ptr(), is_client ? 1 : 0);
+        BIO* ssl_bio = BIO_new_ssl(ssl_ctx.value()->ptr(), server_name.has_value() ? 1 : 0);
         BIO_push(ssl_bio, bio_);
         bio_ = ssl_bio;
         BIO_get_ssl(bio_, &ssl_);
+
+        if (server_name.has_value())
+        {
+          // Set hostname for SNI.
+          SSL_set_tlsext_host_name(ssl_, server_name->c_str());
+
+          // Configure server hostname check.
+          if (!SSL_set1_host(ssl_, server_name->c_str()))
+          {
+            throw std::runtime_error("failed to configure hostname check");
+          }
+
+        }
       }
     }
     ~TcpStream()

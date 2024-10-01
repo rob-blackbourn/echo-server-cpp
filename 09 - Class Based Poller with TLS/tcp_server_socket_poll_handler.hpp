@@ -38,7 +38,7 @@ namespace jetblack::net
       std::optional<std::shared_ptr<SslContext>> ssl_ctx,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : stream_(std::move(socket), ssl_ctx, false),
+      : stream_(std::move(socket), ssl_ctx, std::nullopt),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {

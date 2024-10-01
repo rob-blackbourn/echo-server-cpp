@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     auto socket = std::make_unique<TcpClientSocket>();
     socket->connect(host, port);
 
-    auto stream = TcpStream(std::move(socket), ssl_ctx, true);
+    auto stream = TcpStream(std::move(socket), ssl_ctx, host);
 
     stream.do_handshake();
 

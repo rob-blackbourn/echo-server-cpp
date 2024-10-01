@@ -34,8 +34,6 @@ int main(int argc, char** argv)
 
   try
   {
-    spdlog::info("starting echo server on port {}.", static_cast<int>(port));
-
     op.parse(argc, argv);
 
     if (help_option->is_set())
@@ -48,6 +46,8 @@ int main(int argc, char** argv)
 		    std::cout << op.help(popl::Attribute::expert) << "\n";
       exit(1);
     }
+
+    spdlog::info("starting echo server on port {}{}.", static_cast<int>(port), use_tls ? " with TLS" : "");
 
     std::optional<std::shared_ptr<SslContext>> ssl_ctx;
 
