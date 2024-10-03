@@ -5,6 +5,37 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "(lldb) ssl client",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/09 - Class Based Poller with TLS/client",
+            "args": [
+                "--ssl",
+                "--host", "brick.jetblack.net"
+            ],
+            "stopAtEntry": false,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
+            "name": "(lldb) ssl echo-server",
+            "type": "cppdbg",
+            "request": "launch",
+            "program": "${workspaceFolder}/09 - Class Based Poller with TLS/echo-server",
+            "args": [
+                "--ssl",
+                "--certfile", "${env:HOME}/.keys/server.crt",
+                "--keyfile", "${env:HOME}/.keys/server.key"
+            ],
+            "stopAtEntry": true,
+            "cwd": "${fileDirname}",
+            "environment": [],
+            "externalConsole": false,
+            "MIMode": "lldb"
+        },
+        {
             "name": "client",
             "type": "cppdbg",
             "request": "launch",
