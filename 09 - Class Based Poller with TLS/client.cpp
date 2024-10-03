@@ -85,6 +85,7 @@ int main(int argc, char** argv)
     auto stream = TcpStream(socket, ssl_ctx, host);
 
     stream.do_handshake();
+    stream.verify();
 
     while (1)
     {

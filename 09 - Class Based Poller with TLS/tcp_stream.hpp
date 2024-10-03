@@ -112,6 +112,21 @@ namespace jetblack::net
       throw std::runtime_error("ssl handshake failed: " + errstr + " - " + ssl_errstr);
     }
 
+    void verify()
+    {
+      int err = SSL_get_verify_result(ssl_);
+      if (err != X509_V_OK)
+      {
+        std::string message = X509_verify_cert_error_string(err);
+        throw std::runtime_error(message);
+      }
+
+      X509 *cert = SSL_get_peer_certificate(ssl_);
+      if (cert == nullptr) {
+          throw std::runtime_error("No certificate was presented by the server");
+      }      
+    }
+
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
     {
       if (!do_handshake())
