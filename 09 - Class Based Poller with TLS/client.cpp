@@ -20,15 +20,19 @@ using namespace jetblack::net;
 
 std::shared_ptr<SslContext> make_ssl_context(std::optional<std::string> capath)
 {
+  std::cout << "making ssl client context" << std::endl;
   auto ctx = std::make_shared<SslClientContext>();
   if (capath.has_value())
   {
+    std::cout << "Adding verify locations \"" << capath.value() << "\"" << std::endl;
     ctx->load_verify_locations(capath.value());
   }
   else
   {
+    std::cout << "setting default verify paths" << std::endl;
     ctx->set_default_verify_paths();
   }
+  std::cout << "require ssl verification" << std::endl;
   ctx->verify();
 
   return ctx;

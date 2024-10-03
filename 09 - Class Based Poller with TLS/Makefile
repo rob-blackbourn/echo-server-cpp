@@ -1,6 +1,7 @@
 CXX = clang++
-CXXFLAGS = -g -std=c++23 -Wall -I../external
-LDLIBS = -lspdlog -lfmt -lssl -lcrypto
+# CXX = g++
+CXXFLAGS = -g -std=c++23 -Wall -I../external -I/opt/homebrew/include
+LDLIBS = -L/opt/homebrew/lib -lspdlog -lfmt -lssl -lcrypto
 
 SERVER_HPP = \
 	tcp.hpp \

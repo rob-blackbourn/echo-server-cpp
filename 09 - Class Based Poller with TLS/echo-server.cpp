@@ -15,8 +15,11 @@ using namespace jetblack::net;
 
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
+  std::cout << "making ssl server context" << std::endl;
   auto ctx = std::make_shared<SslServerContext>();
+  std::cout << "Adding certificate file \"" << certfile << "\"" << std::endl;
   ctx->use_certificate_file(certfile);
+  std::cout << "Adding key file \"" << keyfile << "\"" << std::endl;
   ctx->use_private_key_file(keyfile);
   return ctx;
 }
