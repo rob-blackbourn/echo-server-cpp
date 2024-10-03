@@ -22,6 +22,7 @@ std::shared_ptr<SslContext> make_ssl_context(std::optional<std::string> capath)
 {
   std::cout << "making ssl client context" << std::endl;
   auto ctx = std::make_shared<SslClientContext>();
+  ctx->min_proto_version(TLS1_2_VERSION);
   if (capath.has_value())
   {
     std::cout << "Adding verify locations \"" << capath.value() << "\"" << std::endl;
@@ -78,10 +79,10 @@ int main(int argc, char** argv)
 
     spdlog::info("connecting to host {} on port {}{}.", host, port, use_tls ? " using tls" : "");
 
-    auto socket = std::make_unique<TcpClientSocket>();
+    auto socket = std::make_shared<TcpClientSocket>();
     socket->connect(host, port);
 
-    auto stream = TcpStream(std::move(socket), ssl_ctx, host);
+    auto stream = TcpStream(socket, ssl_ctx, host);
 
     stream.do_handshake();
 

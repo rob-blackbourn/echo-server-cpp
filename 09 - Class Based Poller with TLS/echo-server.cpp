@@ -17,6 +17,7 @@ std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const 
 {
   std::cout << "making ssl server context" << std::endl;
   auto ctx = std::make_shared<SslServerContext>();
+  ctx->min_proto_version(TLS1_2_VERSION);
   std::cout << "Adding certificate file \"" << certfile << "\"" << std::endl;
   ctx->use_certificate_file(certfile);
   std::cout << "Adding key file \"" << keyfile << "\"" << std::endl;
@@ -50,7 +51,10 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-    spdlog::info("starting echo server on port {}{}.", static_cast<int>(port), use_tls ? " with TLS" : "");
+    spdlog::info(
+      "starting echo server on port {}{}.",
+      static_cast<int>(port),
+      (use_tls ? " with TLS" : ""));
 
     std::optional<std::shared_ptr<SslContext>> ssl_ctx;
 

@@ -40,6 +40,24 @@ namespace jetblack::net
     }
 
     SSL_CTX* ptr() { return ctx_; }
+
+    void min_proto_version(int version)
+    {
+      if (SSL_CTX_set_min_proto_version(ctx_, version) == 0)
+      {
+        throw std::runtime_error("failed to set the minimum ssl protocol version]");
+      }
+    }
+    int min_proto_version() const noexcept { return SSL_CTX_get_min_proto_version(ctx_); }
+
+    void max_proto_version(int version)
+    {
+      if (SSL_CTX_set_max_proto_version(ctx_, version) == 0)
+      {
+        throw std::runtime_error("failed to set the minimum ssl protocol version]");
+      }
+    }
+    int max_proto_version() const noexcept { return SSL_CTX_get_max_proto_version(ctx_); }
   };
 
   class SslClientContext : public SslContext

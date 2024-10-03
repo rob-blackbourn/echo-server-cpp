@@ -16,6 +16,7 @@ using namespace jetblack::net;
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
   auto ctx = std::make_shared<SslServerContext>();
+  ctx->min_proto_version(TLS1_2_VERSION);
   ctx->use_certificate_file(certfile);
   ctx->use_private_key_file(keyfile);
   return ctx;
@@ -47,7 +48,10 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-    spdlog::info("starting chat server on port {}{}.", static_cast<int>(port), static_cast<int>(port), use_tls ? " with TLS" : "");
+    spdlog::info(
+      "starting chat server on port {}{}.",
+      static_cast<int>(port),
+      static_cast<int>(port), (use_tls ? " with TLS" : ""));
 
     std::optional<std::shared_ptr<SslContext>> ssl_ctx;
 
