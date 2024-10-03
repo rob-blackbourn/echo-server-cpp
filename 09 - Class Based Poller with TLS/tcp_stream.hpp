@@ -200,6 +200,7 @@ namespace jetblack::net
       {
         // This stops BIO_free_all (via SSL_SHUTDOWN) from raising SIGPIPE.
         SSL_set_shutdown(ssl_, SSL_SENT_SHUTDOWN);
+        SSL_set_quiet_shutdown(ssl_, 1);
       }
     }
   };
