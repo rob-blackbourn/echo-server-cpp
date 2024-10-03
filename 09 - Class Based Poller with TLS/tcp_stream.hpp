@@ -24,6 +24,7 @@
 
 #include "tcp_socket.hpp"
 #include "ssl_ctx.hpp"
+#include "openssl_error.hpp"
 
 namespace jetblack::net
 {
@@ -73,7 +74,6 @@ namespace jetblack::net
           {
             throw std::runtime_error("failed to configure hostname check");
           }
-
         }
       }
     }
@@ -107,7 +107,9 @@ namespace jetblack::net
         return false; // Wait for next io event.
       }
 
-      throw std::runtime_error("ssl handshake failed");
+      std::string errstr = openssl_strerror();
+      std::string ssl_errstr = ssl_strerror(error);
+      throw std::runtime_error("ssl handshake failed: " + errstr + " - " + ssl_errstr);
     }
 
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
