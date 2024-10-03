@@ -1,4 +1,4 @@
-#include <iostream>
+#include <cstdio>
 #include <set>
 
 #include <spdlog/spdlog.h>
@@ -13,14 +13,19 @@
 
 using namespace jetblack::net;
 
+void eputs(const std::string& message)
+{
+  std::fputs(message.c_str(), stderr);
+}
+
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
-  std::cout << "making ssl server context" << std::endl;
+  spdlog::info("making ssl server context");
   auto ctx = std::make_shared<SslServerContext>();
   ctx->min_proto_version(TLS1_2_VERSION);
-  std::cout << "Adding certificate file \"" << certfile << "\"" << std::endl;
+  spdlog::info("Adding certificate file \"{}\"", certfile);
   ctx->use_certificate_file(certfile);
-  std::cout << "Adding key file \"" << keyfile << "\"" << std::endl;
+  spdlog::info("Adding key file \"{}\"", keyfile);
   ctx->use_private_key_file(keyfile);
   return ctx;
 }
@@ -43,11 +48,11 @@ int main(int argc, char** argv)
     if (help_option->is_set())
     {
       if (help_option->count() == 1)
-    		std::cout << op << "\n";
+        eputs(op.help());
 	    else if (help_option->count() == 2)
-		    std::cout << op.help(popl::Attribute::advanced) << "\n";
+		    eputs(op.help(popl::Attribute::advanced));
 	    else
-		    std::cout << op.help(popl::Attribute::expert) << "\n";
+		    eputs(op.help(popl::Attribute::expert));
       exit(1);
     }
 
@@ -62,14 +67,14 @@ int main(int argc, char** argv)
     {
       if (!certfile_option->is_set())
       {
-        std::cout << "For ssl must use certfile" << std::endl;
-    		std::cout << op << "\n";
+        eputs("For ssl must use certfile");
+        eputs(op.help());
         exit(1);
       }
       if (!keyfile_option->is_set())
       {
-        std::cout << "For ssl must use keyfile" << std::endl;
-    		std::cout << op << "\n";
+        eputs("For ssl must use keyfile");
+        eputs(op.help());
         exit(1);
       }
       ssl_ctx = make_ssl_context(certfile_option->value(), keyfile_option->value());
