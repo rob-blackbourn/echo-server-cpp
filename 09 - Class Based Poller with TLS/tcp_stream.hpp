@@ -59,7 +59,8 @@ namespace jetblack::net
       }
       else
       {
-        BIO* ssl_bio = BIO_new_ssl(ssl_ctx.value()->ptr(), server_name.has_value() ? 1 : 0);
+        int is_client = server_name.has_value() ? 1 : 0;
+        BIO* ssl_bio = BIO_new_ssl(ssl_ctx.value()->ptr(), is_client);
         BIO_push(ssl_bio, bio_);
         bio_ = ssl_bio;
         BIO_get_ssl(bio_, &ssl_);
