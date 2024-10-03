@@ -141,6 +141,7 @@ namespace jetblack::net
         // Check if we can retry.
         if (!(BIO_should_retry(bio_))) {
           // The socket has faulted.
+          handle_client_faulted();
           socket->is_open(false);
           return eof {};
         }
@@ -173,6 +174,7 @@ namespace jetblack::net
         if (!BIO_should_retry(bio_)) {
           // Not flow control; the socket has faulted.
           socket->is_open(false);
+          handle_client_faulted();
           throw std::runtime_error("failed to write");
         }
 
@@ -189,6 +191,16 @@ namespace jetblack::net
 
       // return the number of bytes that were written.
       return nbytes_written;
+    }
+
+  private:
+    void handle_client_faulted()
+    {
+      if (ssl_ != nullptr)
+      {
+        // This stops BIO_free_all (via SSL_SHUTDOWN) from raising SIGPIPE.
+        SSL_set_shutdown(ssl_, SSL_SENT_SHUTDOWN);
+      }
     }
   };
 

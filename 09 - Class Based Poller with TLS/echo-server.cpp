@@ -1,3 +1,5 @@
+#include <signal.h>
+
 #include <cstdio>
 #include <set>
 
@@ -32,6 +34,8 @@ std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const 
 
 int main(int argc, char** argv)
 {
+  // signal(SIGPIPE,SIG_IGN);
+
   bool use_tls = false;
   uint16_t port = 22000;
   popl::OptionParser op("options");
@@ -111,6 +115,12 @@ int main(int argc, char** argv)
   {
     spdlog::error("Server failed: {}", error.what());
   }
+  catch (...)
+  {
+    spdlog::error("unknown error");
+  }
+
+  spdlog::info("server stopped");
 
   return 0;
 }
