@@ -137,7 +137,7 @@ int main(int argc, char** argv)
 
           [](ssize_t&& bytes_written) mutable
           {
-            print_line(std::format("read {} bytes", bytes_written));
+            print_line(std::format("wrote {} bytes", bytes_written));
             return true;
           }            
         },
