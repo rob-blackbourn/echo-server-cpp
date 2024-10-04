@@ -71,6 +71,14 @@ namespace jetblack::net
       }
     }
 
+    void close(int fd) noexcept
+    {
+      if (auto i = handlers_.find(fd); i != handlers_.end())
+      {
+        i->second->close();
+      }
+    }
+
     void event_loop(int backlog = 10)
     {
       bool is_ok = true;

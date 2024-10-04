@@ -3,6 +3,9 @@ CXX = clang++
 CXXFLAGS = -g -std=c++23 -Wall -I../external -I/opt/homebrew/include
 LDLIBS = -L/opt/homebrew/lib -lspdlog -lfmt -lssl -lcrypto
 
+COMMON_HPP = \
+	utils.hpp
+
 SERVER_HPP = \
 	file.hpp \
 	tcp.hpp \
@@ -31,7 +34,7 @@ all: chat-server echo-server client
 chat-server: chat-server.o
 	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-chat-server.o: chat-server.cpp $(SERVER_HPP)
+chat-server.o: chat-server.cpp $(SERVER_HPP) $(COMMON_HPP)
 
 echo-server: echo-server.o
 	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
@@ -41,7 +44,7 @@ echo-server.o: echo-server.cpp $(SERVER_HPP)
 client: client.o
 	$(LINK.cc) $^ $(LOADLIBES) $(LDLIBS) -o $@
 
-client.o: client.cpp $(CLIENT_HPP)
+client.o: client.cpp $(CLIENT_HPP) $(COMMON_HPP)
 
 .PHONY: clean
 clean:

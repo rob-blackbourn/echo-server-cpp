@@ -122,6 +122,10 @@ namespace jetblack::net
       return stream_.socket->is_open();
     }
 
+    void close() noexcept override
+    {
+    }
+
     bool has_reads() const noexcept { return !read_queue_.empty(); }
 
     std::optional<std::vector<char>> dequeue() noexcept override

@@ -15,11 +15,6 @@
 
 using namespace jetblack::net;
 
-void eputs(const std::string& message)
-{
-  std::fputs(message.c_str(), stderr);
-}
-
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
   spdlog::info("making ssl server context");
@@ -52,11 +47,11 @@ int main(int argc, char** argv)
     if (help_option->is_set())
     {
       if (help_option->count() == 1)
-        eputs(op.help());
+        print_line(stderr, op.help());
 	    else if (help_option->count() == 2)
-		    eputs(op.help(popl::Attribute::advanced));
+		    print_line(stderr, op.help(popl::Attribute::advanced));
 	    else
-		    eputs(op.help(popl::Attribute::expert));
+		    print_line(stderr, op.help(popl::Attribute::expert));
       exit(1);
     }
 
@@ -71,42 +66,60 @@ int main(int argc, char** argv)
     {
       if (!certfile_option->is_set())
       {
-        eputs("For ssl must use certfile");
-        eputs(op.help());
+        print_line(stderr, "For ssl must use certfile");
+        print_line(stderr, op.help());
         exit(1);
       }
       if (!keyfile_option->is_set())
       {
-        eputs("For ssl must use keyfile");
-        eputs(op.help());
+        print_line(stderr, "For ssl must use keyfile");
+        print_line(stderr, op.help());
         exit(1);
       }
       ssl_ctx = make_ssl_context(certfile_option->value(), keyfile_option->value());
     }
 
     auto poller = Poller(
+
+      // on open
       [](Poller&, int fd)
       {
         spdlog::info("on_open: {}", fd);
       },
+
+      // on close
       [](Poller&, int fd)
       {
         spdlog::info("on_close: {}", fd);
       },
+
+      // on read
       [](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
       {
         spdlog::info("on_read: {}", fd);
 
         for (auto& buf : bufs)
         {
-          spdlog::info("on_read: received {}", to_string(buf));
-          poller.write(fd, buf);
+          std::string s {buf.begin(), buf.end() - 1};
+          spdlog::info("on_read: received {}", s);
+          if (s == "KILLME")
+          {
+            spdlog::info("Closing {}", fd);
+            poller.close(fd);
+          }
+          else
+          {
+            poller.write(fd, buf);
+          }
         }
       },
+
+      // on error
       [](Poller&, int fd, std::exception error)
       {
         spdlog::info("on_error: {}, {}", fd, error.what());
       }
+
     );
     poller.add_handler(std::make_unique<TcpListenerSocketPollHandler>(port, ssl_ctx));
     poller.event_loop();

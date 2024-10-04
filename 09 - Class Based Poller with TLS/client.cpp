@@ -1,3 +1,5 @@
+#include <cstdio>
+#include <format>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -5,6 +7,7 @@
 #include <utility>
 #include <variant>
 
+#include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
 #include "tcp_client_socket.hpp"
@@ -20,20 +23,20 @@ using namespace jetblack::net;
 
 std::shared_ptr<SslContext> make_ssl_context(std::optional<std::string> capath)
 {
-  std::cout << "making ssl client context" << std::endl;
+  print_line("making ssl client context");
   auto ctx = std::make_shared<SslClientContext>();
   ctx->min_proto_version(TLS1_2_VERSION);
   if (capath.has_value())
   {
-    std::cout << "Adding verify locations \"" << capath.value() << "\"" << std::endl;
+    print_line(std::format("Adding verify locations \"{}\"", capath.value()));
     ctx->load_verify_locations(capath.value());
   }
   else
   {
-    std::cout << "setting default verify paths" << std::endl;
+    print_line("setting default verify paths");
     ctx->set_default_verify_paths();
   }
-  std::cout << "require ssl verification" << std::endl;
+  print_line("require ssl verification");
   ctx->verify();
 
   return ctx;
@@ -59,11 +62,11 @@ int main(int argc, char** argv)
     if (help_option->is_set())
     {
       if (help_option->count() == 1)
-    		std::cout << op << "\n";
+    		print_line(stderr, op.help());
 	    else if (help_option->count() == 2)
-		    std::cout << op.help(popl::Attribute::advanced) << "\n";
+		    print_line(stderr, op.help(popl::Attribute::advanced));
 	    else
-		    std::cout << op.help(popl::Attribute::expert) << "\n";
+		    print_line(stderr, op.help(popl::Attribute::expert));
       exit(1);
     }
 
@@ -77,7 +80,11 @@ int main(int argc, char** argv)
       ssl_ctx = make_ssl_context(capath);
     }
 
-    spdlog::info("connecting to host {} on port {}{}.", host, port, use_tls ? " using tls" : "");
+    print_line(std::format(
+      "connecting to host {} on port {}{}.",
+      host,
+      port,
+      (use_tls ? " using tls" : "")));
 
     auto socket = std::make_shared<TcpClientSocket>();
     socket->connect(host, port);
@@ -93,34 +100,51 @@ int main(int argc, char** argv)
       std::string message;
       std::cin >> message;
 
+      if (message == "SHUTDOWN")
+      {
+        print_line("shutting down");
+        stream.shutdown();
+        continue;
+      }
+      else if (message == "CLOSE")
+      {
+        print_line("closing");
+        stream.socket->close();
+        continue;
+      }
+      else if (message == "EXIT")
+      {
+        break;
+      }
+
       std::vector<char> send_buf{message.begin(), message.end()};
-      std::cout << "Sending \"" << send_buf << "\"" << std::endl;
+      print_line(std::format("Sending \"{}\"", to_string(send_buf)));
       send_buf.push_back('\0'); // null terminate.
       bool write_ok = std::visit(
         match
         {
           [](eof&&)
           {
-            std::cout << "eof" << std::endl;
+            print_line("eof");
             return false;
           },
 
           [](blocked&&)
           {
-            std::cout << "block" << std::endl;
+            print_line("block");
             return false;
           },
 
           [](ssize_t&& bytes_written) mutable
           {
-            std::cout << "read " << bytes_written << " bytes" << std::endl;
+            print_line(std::format("read {} bytes", bytes_written));
             return true;
           }            
         },
         stream.write(send_buf));
       if (!write_ok)
       {
-        std::cout << "write failed - quitting" << std::endl;
+        print_line("write failed - quitting");
         break;
       }
 
@@ -130,19 +154,19 @@ int main(int argc, char** argv)
         {
           [](blocked&&)
           {
-            std::cout << "read blocked" << std::endl;
+            print_line("read blocked");
             return false;
           },
 
           [](eof&&)
           {
-            std::cout << "read blocked" << std::endl;
+            print_line("read eof");
             return false;
           },
 
           [&](std::vector<char>&& buf) mutable
           {
-            std::cout << "read ok \"" << buf << "\"" << std::endl;
+            print_line(std::format("read ok \"{}\"", to_string(buf)));
             read_buf = std::move(buf);
             return true;
           }
@@ -150,14 +174,14 @@ int main(int argc, char** argv)
         stream.read(1024));
       if (!read_ok)
       {
-        std::cout << "read failed - quitting" << std::endl;
+        print_line("read failed - quitting");
       }
     }
 
   }
   catch(const std::exception& e)
   {
-    std::cerr << e.what() << '\n';
+    print_line(e.what());
   }
   
   return 0;

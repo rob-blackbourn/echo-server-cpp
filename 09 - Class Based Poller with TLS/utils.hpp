@@ -86,4 +86,15 @@ inline std::string to_string(const std::span<T>& collection)
     return ss.str();
 }
 
+inline void print_line(std::FILE* file, const std::string& message)
+{
+  std::fputs(message.c_str(), file);
+  std::fputc('\n', file);
+}
+
+inline void print_line(const std::string& message)
+{
+  print_line(stdout, message);
+}
+
 #endif // __utils_hpp

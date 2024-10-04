@@ -128,6 +128,14 @@ namespace jetblack::net
       }      
     }
 
+    void shutdown()
+    {
+      if (ssl_ != nullptr)
+      {
+        SSL_shutdown(ssl_);
+      }
+    }
+
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
     {
       if (!do_handshake())
@@ -138,6 +146,9 @@ namespace jetblack::net
       std::size_t nbytes_read;
       int result = BIO_read_ex(bio_, buf.data(), len, &nbytes_read);
       if (result == 0) {
+        int ssl_err = SSL_get_error(ssl_, result);
+        std::string errstr = ssl_strerror(ssl_err);;
+        std::cout << "eof: " << errstr << std::endl;
         // Check if we can retry.
         if (!(BIO_should_retry(bio_))) {
           // The socket has faulted.
