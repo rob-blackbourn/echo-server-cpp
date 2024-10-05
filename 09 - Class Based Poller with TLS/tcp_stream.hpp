@@ -140,26 +140,6 @@ namespace jetblack::net
       }      
     }
 
-    bool shutdown()
-    {
-      if (ssl_ != nullptr)
-      {
-        int retcode = SSL_shutdown(ssl_);
-        if (retcode < 0)
-        {
-          auto error = SSL_get_error(ssl_, retcode);
-          auto str = ssl_strerror(error);
-          throw std::runtime_error("failed to shutdown: " + str);
-        }
-        return retcode == 1; // true if shutdown is complete.
-      }
-      else
-      {
-        return true;
-      }
-
-    }
-
     bool do_shutdown()
     {
       if (state_ == State::DATA)

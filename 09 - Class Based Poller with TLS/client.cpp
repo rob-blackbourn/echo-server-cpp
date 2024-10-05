@@ -91,8 +91,11 @@ int main(int argc, char** argv)
 
     auto stream = TcpStream(socket, ssl_ctx, host);
 
-    stream.do_handshake();
-    stream.verify();
+    if (use_tls)
+    {
+      stream.do_handshake();
+      stream.verify();
+    }
 
     while (1)
     {
@@ -106,7 +109,7 @@ int main(int argc, char** argv)
         while (!is_shutdown)
         {
           print_line("shutting down");
-          is_shutdown = stream.shutdown();
+          is_shutdown = stream.do_shutdown();
         }
         continue;
       }
