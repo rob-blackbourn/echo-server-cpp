@@ -102,8 +102,12 @@ int main(int argc, char** argv)
 
       if (message == "SHUTDOWN")
       {
-        print_line("shutting down");
-        stream.shutdown();
+        bool is_shutdown = false;
+        while (!is_shutdown)
+        {
+          print_line("shutting down");
+          is_shutdown = stream.shutdown();
+        }
         continue;
       }
       else if (message == "CLOSE")

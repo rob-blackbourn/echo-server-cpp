@@ -119,6 +119,12 @@ namespace jetblack::net
         stream_.write(buf));
       }
 
+      if (stream_.socket->is_open() && stream_.want_write())
+      {
+        // Some SSL writes are pending. Typically at shutdown.
+        stream_.write(std::span<char> {});
+      }
+
       return stream_.socket->is_open();
     }
 

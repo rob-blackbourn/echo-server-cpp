@@ -29,18 +29,27 @@
 namespace jetblack::net
 {
 
-  struct eof {};
   struct blocked {};
+  struct eof {};
+
 
   class TcpStream
   {
   public:
     typedef std::shared_ptr<TcpSocket> socket_pointer;
+    enum class State
+    {
+      START,
+      HANDSHAKE,
+      DATA,
+      SHUTDOWN,
+      STOP
+    };
 
   private:
     BIO* bio_;
     SSL* ssl_;
-    bool handshake_done {false};
+    State state_ { State::START };
 
   public:
     socket_pointer socket;
@@ -56,9 +65,11 @@ namespace jetblack::net
       if (!ssl_ctx.has_value())
       {
         ssl_ = nullptr;
+        state_ = State::DATA;
       }
       else
       {
+        state_ = State::HANDSHAKE;
         int is_client = server_name.has_value() ? 1 : 0;
         BIO* ssl_bio = BIO_new_ssl(ssl_ctx.value()->ptr(), is_client);
         BIO_push(ssl_bio, bio_);
@@ -78,6 +89,7 @@ namespace jetblack::net
         }
       }
     }
+
     ~TcpStream()
     {
       BIO_free_all(bio_); // This should free bio and ssl.
@@ -86,11 +98,11 @@ namespace jetblack::net
     }
 
     bool want_read() const noexcept { return BIO_should_read(bio_); }
-    bool want_write() const noexcept { return BIO_should_write(bio_); }
+    bool want_write() const noexcept{ return BIO_should_write(bio_); }
 
     bool do_handshake()
     {
-      if (ssl_ == nullptr || handshake_done)
+      if (ssl_ == nullptr || state_ != State::HANDSHAKE)
       {
         return true; // continue processing reads.
       }
@@ -98,8 +110,8 @@ namespace jetblack::net
       int ret = SSL_do_handshake(ssl_);
       if (ret == 1)
       {
-        handshake_done = true;
-        return true;  // continue processing reads.
+        state_ = State::DATA;
+        return true;  // continue processing data.
       }
 
       int error = SSL_get_error(ssl_, ret);
@@ -128,18 +140,89 @@ namespace jetblack::net
       }      
     }
 
-    void shutdown()
+    bool shutdown()
     {
       if (ssl_ != nullptr)
       {
-        SSL_shutdown(ssl_);
+        int retcode = SSL_shutdown(ssl_);
+        if (retcode < 0)
+        {
+          auto error = SSL_get_error(ssl_, retcode);
+          auto str = ssl_strerror(error);
+          throw std::runtime_error("failed to shutdown: " + str);
+        }
+        return retcode == 1; // true if shutdown is complete.
       }
+      else
+      {
+        return true;
+      }
+
+    }
+
+    bool do_shutdown()
+    {
+      if (state_ == State::DATA)
+      {
+        // Transition to shutdown state.
+        state_ = State::SHUTDOWN;
+      }
+
+      if (state_ == State::STOP)
+      {
+        return true;
+      }
+
+      if (state_ != State::SHUTDOWN)
+      {
+        throw std::runtime_error("shutdown in invalid state");
+      }
+
+      if (ssl_ == nullptr)
+      {
+        state_ = State::STOP;
+        return true;
+      }
+
+      if (ssl_ == nullptr || state_ != State::SHUTDOWN)
+      {
+        return true;
+      }
+
+      int retcode = SSL_shutdown(ssl_);
+
+      if (retcode < 0)
+      {
+        // The shutdown failed.
+        socket->is_open(false);
+        return true; // nothing more to do.
+      }
+
+      if (retcode == 1)
+      {
+        // The shutdown succeeded.
+        socket->is_open(false);
+        return true; // nothing more to do.
+      }
+
+      return false; // more work to be done.
     }
 
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
     {
-      if (!do_handshake())
-        return blocked {};
+      if (state_ == State::HANDSHAKE)
+      {
+        if (!do_handshake())
+          return blocked {};
+      }
+
+      if (state_ == State::SHUTDOWN)
+      {
+        if (!do_shutdown())
+          return blocked {};
+        else
+          return eof {};
+      }
 
       std::vector<char> buf(len);
 
@@ -151,10 +234,22 @@ namespace jetblack::net
         std::cout << "eof: " << errstr << std::endl;
         // Check if we can retry.
         if (!(BIO_should_retry(bio_))) {
-          // The socket has faulted.
-          handle_client_faulted();
-          socket->is_open(false);
-          return eof {};
+          if (ssl_ != nullptr && SSL_get_error(ssl_, result) == SSL_ERROR_ZERO_RETURN)
+          {
+            // Try to do an SSL shutdown.
+            state_ = State::SHUTDOWN;
+            if (!do_shutdown())
+              return blocked {};
+            else
+              return eof {};
+          }
+          else
+          {
+            // The socket has faulted.
+            handle_client_faulted();
+            socket->is_open(false);
+            return eof {};
+          }
         }
 
         // The socket is ok, but nothing has been read due to blocking.
@@ -174,8 +269,19 @@ namespace jetblack::net
 
     std::variant<std::size_t, eof, blocked> write(const std::span<char>& buf)
     {
-      if (!do_handshake())
-        return blocked {};
+      if (state_ == State::HANDSHAKE)
+      {
+        if (!do_handshake())
+          return blocked {};
+      }
+
+      if (state_ == State::SHUTDOWN)
+      {
+        if (!do_shutdown())
+          return blocked {};
+        else
+          return eof {};
+      }
 
       std::size_t nbytes_written;
       int result = BIO_write_ex(bio_, buf.data(), buf.size(), &nbytes_written);
