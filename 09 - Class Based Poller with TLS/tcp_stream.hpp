@@ -25,16 +25,12 @@
 #include "match.hpp"
 
 #include "tcp_socket.hpp"
+#include "tcp_types.hpp"
 #include "ssl_ctx.hpp"
 #include "openssl_error.hpp"
 
 namespace jetblack::net
 {
-
-  struct blocked {};
-  struct eof {};
-
-
   class TcpStream
   {
   public:
