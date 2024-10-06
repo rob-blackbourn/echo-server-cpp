@@ -27,6 +27,7 @@
 #include "tcp_socket.hpp"
 #include "tcp_types.hpp"
 #include "ssl_ctx.hpp"
+#include "ssl.hpp"
 #include "openssl_error.hpp"
 
 namespace jetblack::net
@@ -46,7 +47,7 @@ namespace jetblack::net
 
   private:
     BIO* bio_;
-    SSL* ssl_;
+    std::optional<Ssl> ssl_;
     State state_ { State::START };
 
   public:
@@ -62,7 +63,7 @@ namespace jetblack::net
     {
       if (!ssl_ctx.has_value())
       {
-        ssl_ = nullptr;
+        ssl_ = std::nullopt;
         state_ = State::DATA;
       }
       else
@@ -72,18 +73,15 @@ namespace jetblack::net
         BIO* ssl_bio = BIO_new_ssl(ssl_ctx.value()->ptr(), is_client);
         BIO_push(ssl_bio, bio_);
         bio_ = ssl_bio;
-        BIO_get_ssl(bio_, &ssl_);
+        SSL* ssl = nullptr;
+        BIO_get_ssl(bio_, &ssl);
+        ssl_ = Ssl(ssl, false);
 
         if (server_name.has_value())
         {
           // Set hostname for SNI.
-          SSL_set_tlsext_host_name(ssl_, server_name->c_str());
-
-          // Configure server hostname check.
-          if (!SSL_set1_host(ssl_, server_name->c_str()))
-          {
-            throw std::runtime_error("failed to configure hostname check");
-          }
+          ssl_->tlsext_host_name(server_name.value());
+          ssl_->host(server_name.value());
         }
       }
     }
@@ -92,7 +90,6 @@ namespace jetblack::net
     {
       BIO_free_all(bio_); // This should free bio and ssl.
       bio_ = nullptr;
-      ssl_ = nullptr;
     }
 
     bool want_read() const noexcept { return BIO_should_read(bio_); }
@@ -100,42 +97,24 @@ namespace jetblack::net
 
     bool do_handshake()
     {
-      if (ssl_ == nullptr || state_ != State::HANDSHAKE)
+      if (!ssl_.has_value() || state_ != State::HANDSHAKE)
       {
         return true; // continue processing reads.
       }
 
-      int ret = SSL_do_handshake(ssl_);
-      if (ret == 1)
+      bool is_done = ssl_->do_handshake();
+
+      if (is_done)
       {
         state_ = State::DATA;
-        return true;  // continue processing data.
       }
 
-      int error = SSL_get_error(ssl_, ret);
-      if (error == SSL_ERROR_WANT_READ || error == SSL_ERROR_WANT_WRITE)
-      {
-        return false; // Wait for next io event.
-      }
-
-      std::string errstr = openssl_strerror();
-      std::string ssl_errstr = ssl_strerror(error);
-      throw std::runtime_error("ssl handshake failed: " + errstr + " - " + ssl_errstr);
+      return is_done;
     }
 
     void verify()
     {
-      int err = SSL_get_verify_result(ssl_);
-      if (err != X509_V_OK)
-      {
-        std::string message = X509_verify_cert_error_string(err);
-        throw std::runtime_error(message);
-      }
-
-      X509 *cert = SSL_get_peer_certificate(ssl_);
-      if (cert == nullptr) {
-          throw std::runtime_error("No certificate was presented by the server");
-      }      
+      ssl_->verify();
     }
 
     bool do_shutdown()
@@ -156,49 +135,18 @@ namespace jetblack::net
         throw std::runtime_error("shutdown in invalid state");
       }
 
-      if (ssl_ == nullptr)
+      if (!ssl_.has_value())
       {
         state_ = State::STOP;
         return true;
       }
 
-      if (ssl_ == nullptr || state_ != State::SHUTDOWN)
+      if (!ssl_.has_value() || state_ != State::SHUTDOWN)
       {
         return true;
       }
 
       return handle_shutdown();
-    }
-
-    std::variant<bool, blocked> shutdown()
-    {
-      if (ssl_ == nullptr)
-      {
-        state_ = State::STOP;
-        return true;
-      }
-      int retcode = SSL_shutdown(ssl_);
-
-      if (retcode == 1)
-      {
-        // The shutdown succeeded.
-        socket->is_open(false);
-        return true; // nothing more to do.
-      }
-
-      if (retcode == 0)
-      {
-        // A response is required.
-        return false;
-      }
-
-      int err = SSL_get_error(ssl_, retcode);
-      if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
-      {
-        return blocked {};
-      }
-
-      throw std::runtime_error("shutdown failed");
     }
 
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
@@ -228,7 +176,7 @@ namespace jetblack::net
           return blocked {};
         }
 
-        if (ssl_ != nullptr && SSL_get_error(ssl_, result) == SSL_ERROR_ZERO_RETURN)
+        if (ssl_.has_value() && ssl_->error(result) == SSL_ERROR_ZERO_RETURN)
         {
           // The client has initiated an SSL shutdown.
           state_ = State::SHUTDOWN;
@@ -301,17 +249,22 @@ namespace jetblack::net
   private:
     void handle_client_faulted()
     {
-      if (ssl_ != nullptr)
+      if (ssl_.has_value())
       {
         // This stops BIO_free_all (via SSL_SHUTDOWN) from raising SIGPIPE.
-        SSL_set_shutdown(ssl_, SSL_SENT_SHUTDOWN);
-        SSL_set_quiet_shutdown(ssl_, 1);
+        ssl_->quiet_shutdown(true);
       }
     }
 
     bool handle_shutdown()
     {
-      return std::visit(
+      if (!ssl_.has_value())
+      {
+        state_ = State::STOP;
+        return true;
+      }
+
+      bool is_done = std::visit(
         match {
 
           [](blocked&&)
@@ -325,8 +278,15 @@ namespace jetblack::net
           }
 
         },
-        shutdown()
+        ssl_->shutdown()
       );
+
+      if (is_done)
+      {
+        socket->is_open(false);
+      }
+
+      return is_done;
     }
   };
 }

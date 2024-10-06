@@ -18,12 +18,14 @@ SERVER_HPP = \
 	poller.hpp \
 	tcp_server_socket_poll_handler.hpp \
 	tcp_listener_socket_poll_handler.hpp \
-	ssl_ctx.hpp
+	ssl_ctx.hpp \
+	ssl.hpp
 CLIENT_HPP = \
 	file.hpp \
 	tcp_socket.hpp \
 	tcp_client_socket.hpp \
-	ssl_ctx.hpp
+	ssl_ctx.hpp \
+	ssl.hpp
 
 .PHONEY: default
 default: all

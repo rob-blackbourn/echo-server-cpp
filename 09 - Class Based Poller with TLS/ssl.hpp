@@ -50,23 +50,6 @@ namespace jetblack::net
       return *this;
     }
 
-    void tlsex_host_name(const std::string& host_name)
-    {
-      // Set hostname for SNI.
-      if (SSL_set_tlsext_host_name(ssl_, host_name.c_str()) != 1)
-      {
-        throw std::runtime_error("failed to set host name for SNI");
-      }
-    }
-
-    void host(const std::string& host_name)
-    {
-      if (!SSL_set1_host(ssl_, host_name.c_str()))
-      {
-        throw std::runtime_error("failed to configure hostname check");
-      }
-    }
-
     int error(int ret) const noexcept
     {
       return SSL_get_error(ssl_, ret);
@@ -138,6 +121,23 @@ namespace jetblack::net
       }
     }
 
+    void tlsext_host_name(const std::string& host_name)
+    {
+      // Set hostname for SNI.
+      if (SSL_set_tlsext_host_name(ssl_, host_name.c_str()) != 1)
+      {
+        throw std::runtime_error("failed to set host name for SNI");
+      }
+    }
+
+    void host(const std::string& host_name)
+    {
+      if (!SSL_set1_host(ssl_, host_name.c_str()))
+      {
+        throw std::runtime_error("failed to configure hostname check");
+      }
+    }
+
     bool do_handshake()
     {
       int ret = SSL_do_handshake(ssl_);
@@ -148,7 +148,7 @@ namespace jetblack::net
 
       auto err = error(ret);
 
-      if (ret == 0)
+      if (ret == 0 || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
       {
         return false; // handshake in progress.
       }
