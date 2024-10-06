@@ -138,7 +138,7 @@ namespace jetblack::net
       }
     }
 
-    bool do_handshake()
+    std::variant<bool, blocked> do_handshake()
     {
       int ret = SSL_do_handshake(ssl_);
       if (ret == 1)
@@ -146,11 +146,15 @@ namespace jetblack::net
         return true; // handshake complete
       }
 
-      auto err = error(ret);
-
-      if (ret == 0 || err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+      if (ret == 0)
       {
         return false; // handshake in progress.
+      }
+
+      auto err = error(ret);
+      if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+      {
+        return blocked {};
       }
 
       std::string message = std::format(

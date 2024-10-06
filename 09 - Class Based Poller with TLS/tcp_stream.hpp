@@ -102,7 +102,21 @@ namespace jetblack::net
         return true; // continue processing reads.
       }
 
-      bool is_done = ssl_->do_handshake();
+      bool is_done = std::visit(
+        match {
+          
+          [](blocked&&)
+          {
+            return false;
+          },
+          
+          [](bool is_complete)
+          {
+            return is_complete;
+          }
+        },
+        ssl_->do_handshake()
+      );
 
       if (is_done)
       {
