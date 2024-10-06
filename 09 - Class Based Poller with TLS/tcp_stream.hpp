@@ -18,9 +18,11 @@
 #include <span>
 #include <stdexcept>
 #include <system_error>
+#include <utility>
 #include <variant>
 #include <vector>
-#include <utility>
+
+#include "match.hpp"
 
 #include "tcp_socket.hpp"
 #include "ssl_ctx.hpp"
@@ -169,14 +171,17 @@ namespace jetblack::net
         return true;
       }
 
-      int retcode = SSL_shutdown(ssl_);
+      return handle_shutdown();
+    }
 
-      if (retcode < 0)
+    std::variant<bool, blocked> shutdown()
+    {
+      if (ssl_ == nullptr)
       {
-        // The shutdown failed.
-        socket->is_open(false);
-        return true; // nothing more to do.
+        state_ = State::STOP;
+        return true;
       }
+      int retcode = SSL_shutdown(ssl_);
 
       if (retcode == 1)
       {
@@ -185,7 +190,19 @@ namespace jetblack::net
         return true; // nothing more to do.
       }
 
-      return false; // more work to be done.
+      if (retcode == 0)
+      {
+        // A response is required.
+        return false;
+      }
+
+      int err = SSL_get_error(ssl_, retcode);
+      if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+      {
+        return blocked {};
+      }
+
+      throw std::runtime_error("shutdown failed");
     }
 
     std::variant<std::vector<char>, eof, blocked> read(std::size_t len)
@@ -198,10 +215,10 @@ namespace jetblack::net
 
       if (state_ == State::SHUTDOWN)
       {
-        if (!do_shutdown())
-          return blocked {};
-        else
+        if (handle_shutdown())
           return eof {};
+        else
+          return blocked {};
       }
 
       std::vector<char> buf(len);
@@ -219,10 +236,10 @@ namespace jetblack::net
         {
           // The client has initiated an SSL shutdown.
           state_ = State::SHUTDOWN;
-          if (!do_shutdown())
-            return blocked {};
-          else
+          if (handle_shutdown())
             return eof {};
+          else
+            return blocked {};
         }
 
         // The socket has faulted.
@@ -252,10 +269,10 @@ namespace jetblack::net
 
       if (state_ == State::SHUTDOWN)
       {
-        if (!do_shutdown())
-          return blocked {};
-        else
+        if (handle_shutdown())
           return eof {};
+        else
+          return blocked {};
       }
 
       std::size_t nbytes_written;
@@ -295,8 +312,27 @@ namespace jetblack::net
         SSL_set_quiet_shutdown(ssl_, 1);
       }
     }
-  };
 
+    bool handle_shutdown()
+    {
+      return std::visit(
+        match {
+
+          [](blocked&&)
+          {
+            return false;
+          },
+
+          [](bool is_completed)
+          {
+            return is_completed;
+          }
+
+        },
+        shutdown()
+      );
+    }
+  };
 }
 
 #endif // JETBLACK_NET_TCP_STREAM_HPP
