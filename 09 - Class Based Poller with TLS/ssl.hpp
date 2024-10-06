@@ -11,30 +11,13 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 
+#include "tcp_types.hpp"
+
 namespace jetblack::net
 {
 
   class Ssl
   {
-  public:
-
-    enum class Error
-    {
-      NONE = SSL_ERROR_NONE,
-      SSL = SSL_ERROR_SSL,
-      WANT_READ = SSL_ERROR_WANT_READ,
-      WANT_WRITE = SSL_ERROR_WANT_WRITE,
-      WANT_X509_LOOKUP = SSL_ERROR_WANT_X509_LOOKUP,
-      SYSCALL = SSL_ERROR_SYSCALL,
-      ZERO_RETURN = SSL_ERROR_ZERO_RETURN,
-      WANT_CONNECT = SSL_ERROR_WANT_CONNECT,
-      WANT_ACCEPT = SSL_ERROR_WANT_ACCEPT,
-      WANT_ASYNC = SSL_ERROR_WANT_ASYNC,
-      WANT_ASYNC_JOB = SSL_ERROR_WANT_ASYNC_JOB,
-      WANT_CLIENT_HELLO_CB = SSL_ERROR_WANT_CLIENT_HELLO_CB,
-      WANT_RETRY_VERIFY = SSL_ERROR_WANT_RETRY_VERIFY
-    };
-
   private:
     SSL* ssl_;
     bool is_owner_;
@@ -84,90 +67,90 @@ namespace jetblack::net
       }
     }
 
-    Error error(int ret) const noexcept
+    int error(int ret) const noexcept
     {
-      return static_cast<Error>(SSL_get_error(ssl_, ret));
+      return SSL_get_error(ssl_, ret);
     }
 
-    static const char* error_code(Error error)
+    static const char* error_code(int error)
     {
       switch (error)
       {
-      case Error::NONE:
+      case SSL_ERROR_NONE:
         return "NONE";
-      case Error::ZERO_RETURN:
+      case SSL_ERROR_ZERO_RETURN:
         return "ZERO_RETURN";
-      case Error::WANT_READ:
+      case SSL_ERROR_WANT_READ:
         return "WANT_READ";
-      case Error::WANT_WRITE:
+      case SSL_ERROR_WANT_WRITE:
         return "WANT_WRITE";
-      case Error::WANT_ACCEPT:
+      case SSL_ERROR_WANT_ACCEPT:
         return "WANT_ACCEPT";
-      case Error::WANT_CONNECT:
+      case SSL_ERROR_WANT_CONNECT:
         return "WANT_CONNECT";
-      case Error::WANT_X509_LOOKUP:
+      case SSL_ERROR_WANT_X509_LOOKUP:
         return "WANT_X509_LOOKUP";
-      case Error::WANT_ASYNC:
+      case SSL_ERROR_WANT_ASYNC:
         return "WANT_ASYNC";
-      case Error::WANT_ASYNC_JOB:
+      case SSL_ERROR_WANT_ASYNC_JOB:
         return "WANT_ASYNC_JOB";
-      case Error::WANT_CLIENT_HELLO_CB:
+      case SSL_ERROR_WANT_CLIENT_HELLO_CB:
         return "WANT_CLIENT_HELLO_CB";
-      case Error::SYSCALL:
+      case SSL_ERROR_SYSCALL:
         return "SYSCALL";
-      case Error::SSL:
+      case SSL_ERROR_SSL:
         return "SSL";
       default:
         return "UNKNOWN";
       }
     }
 
-    static const char* error_description(Error error)
+    static const char* error_description(int error)
     {
       switch (error)
       {
-      case Error::NONE:
+      case SSL_ERROR_NONE:
         return "operation completed";
-      case Error::ZERO_RETURN:
+      case SSL_ERROR_ZERO_RETURN:
         return "peer closed connection";
-      case Error::WANT_READ:
+      case SSL_ERROR_WANT_READ:
         return "a read is required";    
-      case Error::WANT_WRITE:
+      case SSL_ERROR_WANT_WRITE:
         return "a write is required";    
-      case Error::WANT_ACCEPT:
+      case SSL_ERROR_WANT_ACCEPT:
         return "an accept would block and should be retried";    
-      case Error::WANT_CONNECT:
+      case SSL_ERROR_WANT_CONNECT:
         return "a connect would block and should be retried";    
-      case Error::WANT_X509_LOOKUP:
+      case SSL_ERROR_WANT_X509_LOOKUP:
         return "the callback asked to be called again";    
-      case Error::WANT_ASYNC:
+      case SSL_ERROR_WANT_ASYNC:
         return "the async engine is still processing data";    
-      case Error::WANT_ASYNC_JOB:
+      case SSL_ERROR_WANT_ASYNC_JOB:
         return "an async job could not be created";    
-      case Error::WANT_CLIENT_HELLO_CB:
+      case SSL_ERROR_WANT_CLIENT_HELLO_CB:
         return "the callback asked to be called again";    
-      case Error::SYSCALL:
+      case SSL_ERROR_SYSCALL:
         return "unrecoverable";    
-      case Error::SSL:
+      case SSL_ERROR_SSL:
         return "unrecoverable";    
       default:
         return "unknown";
       }
     }
 
-    Error do_handshake()
+    bool do_handshake()
     {
       int ret = SSL_do_handshake(ssl_);
       if (ret == 1)
       {
-        return Error::NONE;
+        return true; // handshake complete
       }
 
       auto err = error(ret);
 
       if (ret == 0)
       {
-        return err;
+        return false; // handshake in progress.
       }
 
       std::string message = std::format(
@@ -182,21 +165,60 @@ namespace jetblack::net
       return SSL_get_peer_certificate(ssl_);
     }
 
-    void verify()
+    void verify_result_or_throw() const
     {
-      int err = SSL_get_verify_result(ssl_);
-      if (err != X509_V_OK)
+      int result = SSL_get_verify_result(ssl_);
+      if (result != X509_V_OK)
       {
-        std::string message = X509_verify_cert_error_string(err);
+        std::string message = X509_verify_cert_error_string(result);
         throw std::runtime_error(message);
       }
+    }
+
+    void verify()
+    {
+      verify_result_or_throw();
 
       if (peer_certificate() == nullptr) {
           throw std::runtime_error("no certificate was presented");
       }
     }
+
+    void quiet_shutdown(bool is_quiet) noexcept
+    {
+      // This stops BIO_free_all (via SSL_SHUTDOWN) from raising SIGPIPE.
+      SSL_set_quiet_shutdown(ssl_, is_quiet ? 1 : 0);
+    }
+
+    bool quiet_shutdown() const noexcept
+    {
+      return SSL_get_quiet_shutdown(ssl_) == 1;
+    }
+
+    std::variant<bool, blocked> shutdown()
+    {
+      int retcode = SSL_shutdown(ssl_);
+
+      if (retcode == 1)
+      {
+        return true; // Shutdown complete.
+      }
+
+      if (retcode == 0)
+      {
+        return false; // A response is required.
+      }
+
+      auto err = error(retcode);
+      if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
+      {
+        return blocked {};
+      }
+
+      throw std::runtime_error("shutdown failed");
+    }
   };
 
 }
 
-#endif JETBLACK_NET_SSL_HPP
+#endif // JETBLACK_NET_SSL_HPP
