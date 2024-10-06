@@ -114,7 +114,8 @@
             "program": "${workspaceFolder}/09 - Class Based Poller with TLS/client",
             "args": [
                 "--ssl",
-                "--host", "beast.jetblack.net"
+                "--host", "beast.jetblack.net",
+                "--port", "8080"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
@@ -142,7 +143,8 @@
             "args": [
                 "--ssl",
                 "--certfile", "${env:HOME}/.keys/server.crt",
-                "--keyfile", "${env:HOME}/.keys/server.key"
+                "--keyfile", "${env:HOME}/.keys/server.key",
+                "--port", "8080"
             ],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

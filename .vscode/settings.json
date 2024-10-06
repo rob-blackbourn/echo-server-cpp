@@ -73,13 +73,15 @@
         "sstream": "cpp",
         "stop_token": "cpp",
         "thread": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "source_location": "cpp"
     },
     "C_Cpp.clang_format_fallbackStyle": "Mozilla",
     "C_Cpp.clang_format_style": "Mozilla",
     "cSpell.words": [
         "clientaddr",
         "clientlen",
+        "eputs",
         "jetblack",
         "servaddr",
         "spdlog"

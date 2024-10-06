@@ -209,31 +209,26 @@ namespace jetblack::net
       std::size_t nbytes_read;
       int result = BIO_read_ex(bio_, buf.data(), len, &nbytes_read);
       if (result == 0) {
-        int ssl_err = SSL_get_error(ssl_, result);
-        std::string errstr = ssl_strerror(ssl_err);;
-        std::cout << "eof: " << errstr << std::endl;
-        // Check if we can retry.
-        if (!(BIO_should_retry(bio_))) {
-          if (ssl_ != nullptr && SSL_get_error(ssl_, result) == SSL_ERROR_ZERO_RETURN)
-          {
-            // Try to do an SSL shutdown.
-            state_ = State::SHUTDOWN;
-            if (!do_shutdown())
-              return blocked {};
-            else
-              return eof {};
-          }
-          else
-          {
-            // The socket has faulted.
-            handle_client_faulted();
-            socket->is_open(false);
-            return eof {};
-          }
+        if (BIO_should_retry(bio_))
+        {
+          // The socket is ok, but nothing has been read due to blocking.
+          return blocked {};
         }
 
-        // The socket is ok, but nothing has been read due to blocking.
-        return blocked {};
+        if (ssl_ != nullptr && SSL_get_error(ssl_, result) == SSL_ERROR_ZERO_RETURN)
+        {
+          // The client has initiated an SSL shutdown.
+          state_ = State::SHUTDOWN;
+          if (!do_shutdown())
+            return blocked {};
+          else
+            return eof {};
+        }
+
+        // The socket has faulted.
+        handle_client_faulted();
+        socket->is_open(false);
+        return eof {};
       }
 
       if (nbytes_read == 0) {
