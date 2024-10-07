@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     auto socket = std::make_shared<TcpClientSocket>();
     socket->connect(host, port);
 
-    auto stream = TcpStream(socket, ssl_ctx, host);
+    auto stream = TcpStream::make(socket, ssl_ctx, host);
 
     if (use_tls)
     {

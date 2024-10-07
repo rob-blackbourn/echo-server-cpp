@@ -59,7 +59,16 @@ namespace jetblack::net
       auto client = listener_.accept();
       client->blocking(false);
 
-      poller.add_handler(std::make_unique<TcpServerSocketPollHandler>(std::move(client), ssl_ctx_, 8096, 8096));
+      if (!ssl_ctx_)
+      {
+        poller.add_handler(
+          std::make_unique<TcpServerSocketPollHandler>(std::move(client), 8096, 8096));
+      }
+      else
+      {
+        poller.add_handler(
+          std::make_unique<TcpServerSocketPollHandler>(std::move(client), *ssl_ctx_, 8096, 8096));
+      }
 
       return true;
     }

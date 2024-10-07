@@ -54,29 +54,42 @@ namespace jetblack::net
     socket_pointer socket;
 
   public:
-    TcpStream(
-      socket_pointer socket,
-      std::optional<std::shared_ptr<SslContext>> ssl_ctx,
-      std::optional<std::string> server_name)
+    TcpStream(socket_pointer socket)
       : bio_(*socket, BIO_NOCLOSE),
         socket(std::move(socket))
     {
-      if (!ssl_ctx.has_value())
+    }
+
+    TcpStream(socket_pointer socket, std::shared_ptr<SslContext> ssl_ctx, bool is_client)
+      : TcpStream(socket)
+    {
+        state_ = State::HANDSHAKE;
+        bio_.push_ssl(*ssl_ctx, is_client);
+    }
+
+    TcpStream(socket_pointer socket, std::shared_ptr<SslContext> ssl_ctx, const std::string& server_name)
+      : TcpStream(socket, ssl_ctx, true)
+    {
+      // Set hostname for SNI.
+      bio_.ssl->tlsext_host_name(server_name);
+      bio_.ssl->host(server_name);
+    }
+
+    static TcpStream make(
+      socket_pointer socket,
+      std::optional<std::shared_ptr<SslContext>> ssl_ctx,
+      std::optional<std::string> server_name)
+    {
+      if (!ssl_ctx)
       {
-        state_ = State::DATA;
+        return TcpStream(socket);
       }
       else
       {
-        state_ = State::HANDSHAKE;
-        int is_client = server_name.has_value() ? 1 : 0;
-        bio_.push_ssl(**ssl_ctx, is_client);
-
-        if (server_name.has_value())
-        {
-          // Set hostname for SNI.
-          bio_.ssl->tlsext_host_name(server_name.value());
-          bio_.ssl->host(server_name.value());
-        }
+        if (!server_name)
+          return TcpStream(socket, *ssl_ctx, false);
+        else
+          return TcpStream(socket, *ssl_ctx, *server_name);
       }
     }
 

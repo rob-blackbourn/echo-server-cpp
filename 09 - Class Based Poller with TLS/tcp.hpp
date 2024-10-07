@@ -6,6 +6,5 @@
 #include "tcp_listener_socket.hpp"
 
 #include "tcp_stream.hpp"
-#include "tcp_buffered_stream.hpp"
 
 #endif // JETBLACK_NET_TCP_HPP
