@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_LISTENER_SOCKET_POLL_HANDLER_HPP
-#define JETBLACK_NET_LISTENER_SOCKET_POLL_HANDLER_HPP
+#ifndef JETBLACK_NET_LISTENER_POLL_HANDLER_HPP
+#define JETBLACK_NET_LISTENER_POLL_HANDLER_HPP
 
 #include <poll.h>
 
@@ -22,14 +22,14 @@
 
 namespace jetblack::net
 {
-  class TcpListenerSocketPollHandler : public PollHandler
+  class TcpListenerPollHandler : public PollHandler
   {
   private:
     std::optional<std::shared_ptr<SslContext>> ssl_ctx_;
     TcpListenerSocket listener_;
 
   public:
-    TcpListenerSocketPollHandler(
+    TcpListenerPollHandler(
       uint16_t port,
       std::optional<std::shared_ptr<SslContext>> ssl_ctx = std::nullopt,
       int backlog = 10)
@@ -40,7 +40,7 @@ namespace jetblack::net
       listener_.reuseaddr(true);
       listener_.listen(backlog);
     }
-    ~TcpListenerSocketPollHandler() override
+    ~TcpListenerPollHandler() override
     {
     }
 
@@ -85,4 +85,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_LISTENER_SOCKET_POLL_HANDLER_HPP
+#endif // JETBLACK_NET_LISTENER_POLL_HANDLER_HPP

@@ -19,7 +19,7 @@ SERVER_HPP = \
 	poll_handler.hpp \
 	poller.hpp \
 	tcp_socket_poll_handler.hpp \
-	tcp_listener_socket_poll_handler.hpp
+	tcp_listener_poll_handler.hpp
 CLIENT_HPP = \
 	tcp_client_socket.hpp
 

@@ -7,7 +7,7 @@
 
 #include "tcp.hpp"
 #include "poller.hpp"
-#include "tcp_listener_socket_poll_handler.hpp"
+#include "tcp_listener_poll_handler.hpp"
 #include "ssl_ctx.hpp"
 #include "utils.hpp"
 
@@ -121,7 +121,7 @@ int main(int argc, char** argv)
       }
 
     );
-    poller.add_handler(std::make_unique<TcpListenerSocketPollHandler>(port, ssl_ctx));
+    poller.add_handler(std::make_unique<TcpListenerPollHandler>(port, ssl_ctx));
     poller.event_loop();
   }
   catch(const std::exception& error)
