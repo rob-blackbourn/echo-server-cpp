@@ -53,7 +53,6 @@ namespace jetblack::net
         try
         {
           close();
-          is_open_ = false;
         }
         catch(const std::exception& e)
         {
@@ -72,6 +71,7 @@ namespace jetblack::net
       if (result == -1) {
         throw std::system_error(errno, std::generic_category(), "failed to close socket");
       }
+      is_open_ = false;
     }
 
     int fcntl_flags() const

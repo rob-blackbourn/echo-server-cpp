@@ -147,6 +147,10 @@ namespace jetblack::net
 
     void close() noexcept override
     {
+      if (stream_.socket->is_open())
+      {
+        stream_.socket->close();
+      }
     }
 
     bool has_reads() const noexcept { return !read_queue_.empty(); }

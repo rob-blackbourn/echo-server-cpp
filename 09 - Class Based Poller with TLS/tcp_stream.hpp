@@ -289,6 +289,7 @@ namespace jetblack::net
       if (is_done)
       {
         socket->is_open(false);
+        state_ = State::STOP;
       }
 
       return is_done;
