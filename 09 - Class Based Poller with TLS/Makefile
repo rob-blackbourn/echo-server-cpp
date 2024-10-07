@@ -4,28 +4,25 @@ CXXFLAGS = -g -std=c++23 -Wall -I../external -I/opt/homebrew/include
 LDLIBS = -L/opt/homebrew/lib -lspdlog -lfmt -lssl -lcrypto
 
 COMMON_HPP = \
+	file.hpp \
+	tcp_socket.hpp \
+	bio.hpp \
+	tcp_stream.hpp \
+	ssl_ctx.hpp \
+	ssl.hpp \
 	utils.hpp
 
 SERVER_HPP = \
-	file.hpp \
 	tcp.hpp \
-	tcp_socket.hpp \
 	tcp_listener_socket.hpp \
 	tcp_server_socket.hpp \
-	tcp_stream.hpp \
 	tcp_buffered_stream.hpp \
 	poll_handler.hpp \
 	poller.hpp \
 	tcp_server_socket_poll_handler.hpp \
-	tcp_listener_socket_poll_handler.hpp \
-	ssl_ctx.hpp \
-	ssl.hpp
+	tcp_listener_socket_poll_handler.hpp
 CLIENT_HPP = \
-	file.hpp \
-	tcp_socket.hpp \
-	tcp_client_socket.hpp \
-	ssl_ctx.hpp \
-	ssl.hpp
+	tcp_client_socket.hpp
 
 .PHONEY: default
 default: all

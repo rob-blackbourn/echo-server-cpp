@@ -50,7 +50,7 @@ namespace jetblack::net
       return *this;
     }
 
-    int error(int ret) const noexcept
+    int error(int ret = 0) const noexcept
     {
       return SSL_get_error(ssl_, ret);
     }
