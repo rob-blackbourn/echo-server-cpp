@@ -85,7 +85,7 @@ namespace jetblack::net
 
     bool do_handshake()
     {
-      if (!bio_.ssl.has_value() || state_ != State::HANDSHAKE)
+      if (!bio_.ssl || state_ != State::HANDSHAKE)
       {
         return true; // continue processing reads.
       }
@@ -116,7 +116,7 @@ namespace jetblack::net
 
     void verify()
     {
-      if (!bio_.ssl.has_value())
+      if (!bio_.ssl)
       {
         return;
       }
@@ -142,13 +142,13 @@ namespace jetblack::net
         throw std::runtime_error("shutdown in invalid state");
       }
 
-      if (!bio_.ssl.has_value())
+      if (!bio_.ssl)
       {
         state_ = State::STOP;
         return true;
       }
 
-      if (!bio_.ssl.has_value() || state_ != State::SHUTDOWN)
+      if (!bio_.ssl || state_ != State::SHUTDOWN)
       {
         return true;
       }
@@ -175,14 +175,14 @@ namespace jetblack::net
       std::vector<char> buf(len);
 
       auto nbytes_read = bio_.read(buf);
-      if (!nbytes_read.has_value()) {
+      if (!nbytes_read) {
         if (bio_.should_retry())
         {
           // The socket is ok, but nothing has been read due to blocking.
           return blocked {};
         }
 
-        if (bio_.ssl.has_value() && bio_.ssl->error() == SSL_ERROR_ZERO_RETURN)
+        if (bio_.ssl && bio_.ssl->error() == SSL_ERROR_ZERO_RETURN)
         {
           // The client has initiated an SSL shutdown.
           state_ = State::SHUTDOWN;
@@ -226,7 +226,7 @@ namespace jetblack::net
       }
 
       auto nbytes_written = bio_.write(buf);
-      if (!nbytes_written.has_value())
+      if (!nbytes_written)
       {
         // Check if it's flow control.
         if (!bio_.should_retry()) {
@@ -254,7 +254,7 @@ namespace jetblack::net
   private:
     void handle_client_faulted()
     {
-      if (bio_.ssl.has_value())
+      if (bio_.ssl)
       {
         // This stops BIO_free_all (via SSL_SHUTDOWN) from raising SIGPIPE.
         bio_.ssl->quiet_shutdown(true);
@@ -263,7 +263,7 @@ namespace jetblack::net
 
     bool handle_shutdown()
     {
-      if (!bio_.ssl.has_value())
+      if (!bio_.ssl)
       {
         state_ = State::STOP;
         return true;
