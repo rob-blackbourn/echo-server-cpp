@@ -23,7 +23,7 @@
 
 namespace jetblack::net
 {
-  class TcpServerSocketPollHandler : public PollHandler
+  class TcpSocketPollHandler : public PollHandler
   {
   private:
     TcpStream stream_;
@@ -34,7 +34,7 @@ namespace jetblack::net
     const std::size_t read_bufsiz;
     const std::size_t write_bufsiz;
 
-    TcpServerSocketPollHandler(
+    TcpSocketPollHandler(
       std::unique_ptr<TcpSocket> socket,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
@@ -43,7 +43,7 @@ namespace jetblack::net
         write_bufsiz(write_bufsiz)
     {
     }
-    TcpServerSocketPollHandler(
+    TcpSocketPollHandler(
       std::unique_ptr<TcpSocket> socket,
       std::shared_ptr<SslContext> ssl_ctx,
       std::size_t read_bufsiz,
@@ -53,7 +53,7 @@ namespace jetblack::net
         write_bufsiz(write_bufsiz)
     {
     }
-    ~TcpServerSocketPollHandler() override
+    ~TcpSocketPollHandler() override
     {
     }
 

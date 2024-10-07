@@ -18,7 +18,7 @@
 
 #include "poll_handler.hpp"
 #include "poller.hpp"
-#include "tcp_server_socket_poll_handler.hpp"
+#include "tcp_socket_poll_handler.hpp"
 
 namespace jetblack::net
 {
@@ -54,7 +54,7 @@ namespace jetblack::net
       auto client = listener_.accept();
       client->blocking(false);
 
-      poller.add_handler(std::make_unique<TcpServerSocketPollHandler>(std::move(client), 8096, 8096));
+      poller.add_handler(std::make_unique<TcpSocketPollHandler>(std::move(client), 8096, 8096));
 
       return true;
     }

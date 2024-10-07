@@ -18,7 +18,7 @@
 
 #include "poll_handler.hpp"
 #include "poller.hpp"
-#include "tcp_server_socket_poll_handler.hpp"
+#include "tcp_socket_poll_handler.hpp"
 
 namespace jetblack::net
 {
@@ -62,12 +62,12 @@ namespace jetblack::net
       if (!ssl_ctx_)
       {
         poller.add_handler(
-          std::make_unique<TcpServerSocketPollHandler>(std::move(client), 8096, 8096));
+          std::make_unique<TcpSocketPollHandler>(std::move(client), 8096, 8096));
       }
       else
       {
         poller.add_handler(
-          std::make_unique<TcpServerSocketPollHandler>(std::move(client), *ssl_ctx_, 8096, 8096));
+          std::make_unique<TcpSocketPollHandler>(std::move(client), *ssl_ctx_, 8096, 8096));
       }
 
       return true;
