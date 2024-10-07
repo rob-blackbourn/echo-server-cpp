@@ -174,7 +174,7 @@ namespace jetblack::net
 
       std::vector<char> buf(len);
 
-      auto nbytes_read = bio_.read(buf);
+      std::optional<std::size_t> nbytes_read = bio_.read(buf);
       if (!nbytes_read) {
         if (bio_.should_retry())
         {
@@ -225,7 +225,7 @@ namespace jetblack::net
           return blocked {};
       }
 
-      auto nbytes_written = bio_.write(buf);
+      std::optional<std::size_t> nbytes_written = bio_.write(buf);
       if (!nbytes_written)
       {
         // Check if it's flow control.
