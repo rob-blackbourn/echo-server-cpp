@@ -182,7 +182,7 @@ namespace jetblack::net
       std::vector<char> buf(len);
 
       std::size_t nbytes_read;
-      int result = BIO_read_ex(bio_, buf.data(), len, &nbytes_read);
+      int result = BIO_read_ex(bio_, buf.data(), buf.size(), &nbytes_read);
       if (result == 0) {
         if (BIO_should_retry(bio_))
         {
