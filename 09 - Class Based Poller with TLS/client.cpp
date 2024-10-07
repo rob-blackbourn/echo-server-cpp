@@ -99,9 +99,13 @@ int main(int argc, char** argv)
 
     while (1)
     {
-      std::cout << "Enter a message: ";
-      std::string message;
-      std::cin >> message;
+      std::fputs("Enter a message: ", stdout);
+      char buf[1024];
+      if (fgets(buf, sizeof(buf), stdin) == nullptr)
+      {
+        break;
+      }
+      std::string message {buf, buf + (std::strlen(buf) - 1)};
 
       if (message == "SHUTDOWN")
       {
@@ -124,9 +128,7 @@ int main(int argc, char** argv)
         break;
       }
 
-      std::vector<char> send_buf{message.begin(), message.end()};
-      print_line(std::format("Sending \"{}\"", to_string(send_buf)));
-      send_buf.push_back('\0'); // null terminate.
+      print_line(std::format("Sending \"{}\"", message));
       bool write_ok = std::visit(
         match
         {
@@ -148,7 +150,7 @@ int main(int argc, char** argv)
             return true;
           }            
         },
-        stream.write(send_buf));
+        stream.write(message));
       if (!write_ok)
       {
         print_line("write failed - quitting");
@@ -173,7 +175,8 @@ int main(int argc, char** argv)
 
           [&](std::vector<char>&& buf) mutable
           {
-            print_line(std::format("read ok \"{}\"", to_string(buf)));
+            std::string message {buf.begin(), buf.end()};
+            print_line(std::format("read ok \"{}\"", message));
             read_buf = std::move(buf);
             return true;
           }

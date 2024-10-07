@@ -100,11 +100,11 @@ int main(int argc, char** argv)
 
         for (auto& buf : bufs)
         {
-          std::string s {buf.begin(), buf.end() - 1};
+          std::string s {buf.begin(), buf.end()};
           spdlog::info("on_read: received {}", s);
           if (s == "KILLME")
           {
-            spdlog::info("Closing {}", fd);
+            spdlog::info("closing {}", fd);
             poller.close(fd);
           }
           else
