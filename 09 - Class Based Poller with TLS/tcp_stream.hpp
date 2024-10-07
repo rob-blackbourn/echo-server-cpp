@@ -48,20 +48,22 @@ namespace jetblack::net
 
   private:
     Bio bio_;
+    bool should_verify_;
     State state_ { State::START };
 
   public:
     socket_pointer socket;
 
   public:
-    TcpStream(socket_pointer socket)
+    TcpStream(socket_pointer socket, bool should_verify)
       : bio_(*socket, BIO_NOCLOSE),
+        should_verify_(should_verify),
         socket(std::move(socket))
     {
     }
 
     TcpStream(socket_pointer socket, std::shared_ptr<SslContext> ssl_ctx, bool is_client)
-      : TcpStream(socket)
+      : TcpStream(socket, is_client)
     {
         state_ = State::HANDSHAKE;
         bio_.push_ssl(*ssl_ctx, is_client);
@@ -82,7 +84,7 @@ namespace jetblack::net
     {
       if (!ssl_ctx)
       {
-        return TcpStream(socket);
+        return TcpStream(socket, false);
       }
       else
       {
@@ -122,6 +124,10 @@ namespace jetblack::net
       if (is_done)
       {
         state_ = State::DATA;
+        if (should_verify_)
+        {
+          bio_.ssl->verify();
+        }
       }
 
       return is_done;

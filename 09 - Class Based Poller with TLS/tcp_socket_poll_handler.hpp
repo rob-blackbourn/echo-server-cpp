@@ -38,7 +38,7 @@ namespace jetblack::net
       std::unique_ptr<TcpSocket> socket,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : stream_(std::move(socket)),
+      : stream_(std::move(socket), false),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {
@@ -49,6 +49,17 @@ namespace jetblack::net
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
       : stream_(std::move(socket), ssl_ctx, false),
+        read_bufsiz(read_bufsiz),
+        write_bufsiz(write_bufsiz)
+    {
+    }
+    TcpSocketPollHandler(
+      std::unique_ptr<TcpSocket> socket,
+      std::shared_ptr<SslContext> ssl_ctx,
+      const std::string& server_name,
+      std::size_t read_bufsiz,
+      std::size_t write_bufsiz)
+      : stream_(std::move(socket), ssl_ctx, server_name),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {
