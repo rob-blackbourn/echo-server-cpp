@@ -2,7 +2,6 @@
 #define JETBLACK_NET_TCP_SOCKET_HPP
 
 #include <arpa/inet.h>
-#include <fcntl.h>
 #include <netdb.h>
 #include <sys/socket.h>
 #include <sys/types.h>
@@ -23,9 +22,9 @@ namespace jetblack::net
     explicit TcpSocket()
       : File(socket(AF_INET, SOCK_STREAM, 0))
     {
-      if (fd_ == -1) {
-        throw std::system_error(
-          errno, std::generic_category(), "failed to create socket");
+      if (fd_ == -1)
+      {
+        throw std::system_error(errno, std::generic_category(), "failed to create socket");
       }
     }
 
@@ -37,9 +36,9 @@ namespace jetblack::net
     void set_option(int level, int name, bool is_set) const
     {
       int value = is_set ? 1 : 0;
-      if (::setsockopt(fd_, level, name, (void*)&value, sizeof(value)) == -1) {
-        throw std::system_error(
-          errno, std::generic_category(), "fcntl failed to set flags");
+      if (::setsockopt(fd_, level, name, (void*)&value, sizeof(value)) == -1)
+      {
+        throw std::system_error(errno, std::generic_category(), "setsockopt failed to set option");
       }
     }
 
