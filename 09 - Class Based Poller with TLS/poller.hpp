@@ -9,6 +9,7 @@
 #include <memory>
 #include <system_error>
 #include <utility>
+#include <vector>
 
 #include "poll_handler.hpp"
 
@@ -31,7 +32,7 @@ namespace jetblack::net
     typedef std::unique_ptr<PollHandler> handler_pointer;
     typedef std::map<int, handler_pointer> handler_map;
     typedef std::function<void(Poller&, int fd)> connection_callback;
-    typedef std::function<void(Poller&, int fd, std::vector<std::vector<char>> bufs)> read_callback;
+    typedef std::function<void(Poller&, int fd, std::vector<std::vector<char>>&& bufs)> read_callback;
     typedef std::function<void(Poller&, int fd, std::exception)> error_callback;
 
   private:
@@ -56,8 +57,8 @@ namespace jetblack::net
 
     void add_handler(handler_pointer handler) noexcept
     {
-      auto fd = handler->fd();
-      auto is_listener = handler->is_listener();
+      int fd = handler->fd();
+      bool is_listener = handler->is_listener();
       handlers_[fd] = std::move(handler);
       if (!is_listener)
         on_open_(*this, fd);
@@ -147,7 +148,7 @@ namespace jetblack::net
 
         if (!bufs.empty())
         {
-          on_read_(*this, handler->fd(), bufs);
+          on_read_(*this, handler->fd(), std::move(bufs));
         }
 
         return can_continue;

@@ -94,7 +94,7 @@ int main(int argc, char** argv)
       },
 
       // on read
-      [](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
+      [](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
       {
         spdlog::info("on_read: {}", fd);
 

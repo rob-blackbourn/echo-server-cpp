@@ -75,17 +75,20 @@ int main(int argc, char** argv)
     std::set<int> clients;
 
     auto poller = Poller(
+
       [&clients](Poller&, int fd)
       {
         spdlog::info("on_open: {}", fd);
         clients.insert(fd);
       },
+
       [&clients](Poller&, int fd)
       {
         spdlog::info("on_close: {}", fd);
         clients.erase(fd);
       },
-      [&clients](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
+
+      [&clients](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
       {
         spdlog::info("on_read: {}", fd);
 
@@ -102,6 +105,7 @@ int main(int argc, char** argv)
           }
         }
       },
+      
       [](Poller&, int fd, std::exception error)
       {
         spdlog::info("on_error: {}, {}", fd, error.what());
