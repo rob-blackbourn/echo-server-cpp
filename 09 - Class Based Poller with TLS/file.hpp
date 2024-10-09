@@ -1,15 +1,10 @@
 #ifndef JETBLACK_NET_FILE_HPP
 #define JETBLACK_NET_FILE_HPP
 
-#include <arpa/inet.h>
 #include <fcntl.h>
-#include <netdb.h>
-#include <sys/socket.h>
-#include <sys/types.h>
 #include <unistd.h>
 
 #include <cerrno>
-#include <iostream>
 #include <system_error>
 
 namespace jetblack::net
