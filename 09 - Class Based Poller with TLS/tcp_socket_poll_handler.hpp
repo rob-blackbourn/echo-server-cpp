@@ -185,9 +185,9 @@ namespace jetblack::net
       return buf;
     }
 
-    void enqueue(std::vector<char> buf) noexcept override
+    void enqueue(const std::vector<char>& buf) noexcept override
     {
-      write_queue_.push_back(std::make_pair(std::move(buf), 0));
+      write_queue_.push_back(std::make_pair(buf, 0));
     }
   };
 }

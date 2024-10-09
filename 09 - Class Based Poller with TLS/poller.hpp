@@ -20,8 +20,7 @@ namespace jetblack::net
     int active_fd_count = ::poll(fds.data(), fds.size(), -1);
     if (active_fd_count < 0)
     {
-      throw std::system_error(
-        errno, std::generic_category(), "poll failed");
+      throw std::system_error(errno, std::generic_category(), "poll failed");
     }
     return active_fd_count;
   }
@@ -64,7 +63,7 @@ namespace jetblack::net
         on_open_(*this, fd);
     }
 
-    void write(int fd, std::vector<char> buf) noexcept
+    void write(int fd, const std::vector<char>& buf) noexcept
     {
       if (auto i = handlers_.find(fd); i != handlers_.end())
       {

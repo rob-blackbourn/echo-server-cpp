@@ -80,7 +80,7 @@ namespace jetblack::net
     }
 
     std::optional<std::vector<char>> dequeue() noexcept override { return std::nullopt; }
-    void enqueue(std::vector<char> buf) noexcept override {}
+    void enqueue(const std::vector<char>& buf) noexcept override {}
   };
 
 }

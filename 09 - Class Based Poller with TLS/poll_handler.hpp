@@ -20,7 +20,7 @@ namespace jetblack::net
     virtual bool read(Poller& poller) noexcept = 0;
     virtual bool write() noexcept = 0;
     virtual void close() noexcept = 0;
-    virtual void enqueue(std::vector<char> buf) noexcept = 0;
+    virtual void enqueue(const std::vector<char>& buf) noexcept = 0;
     virtual std::optional<std::vector<char>> dequeue() noexcept = 0;
   };
 }
