@@ -54,8 +54,6 @@ namespace jetblack::net
 
     bool read(Poller& poller) override
     {
-      // Accept the client. This might throw an exception which will not be caught, as subsequent
-      // connections will also fail.
       auto client = listener_.accept();
       client->blocking(false);
 
