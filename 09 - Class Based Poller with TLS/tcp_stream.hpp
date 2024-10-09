@@ -29,7 +29,6 @@
 #include "ssl_ctx.hpp"
 #include "ssl.hpp"
 #include "bio.hpp"
-#include "openssl_error.hpp"
 
 namespace jetblack::net
 {
