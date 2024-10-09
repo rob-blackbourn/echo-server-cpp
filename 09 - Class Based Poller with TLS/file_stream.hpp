@@ -9,14 +9,16 @@
 #include <unistd.h>
 
 #include <cerrno>
+#include <cstddef>
+
 #include <memory>
 #include <optional>
 #include <span>
 #include <stdexcept>
 #include <system_error>
+#include <utility>
 #include <variant>
 #include <vector>
-#include <utility>
 
 #include "file.hpp"
 #include "file_types.hpp"
