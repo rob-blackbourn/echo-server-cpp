@@ -105,12 +105,13 @@ namespace jetblack::net
       catch (...)
       {
         stream_.socket->is_open(false);
+        throw;
       }
 
       return stream_.socket->is_open();
     }
 
-    bool write() noexcept override
+    bool write() override
     {
       try
       {
@@ -160,12 +161,13 @@ namespace jetblack::net
       catch(const std::exception& e)
       {
         stream_.socket->is_open(false);
+        throw;
       }      
 
       return stream_.socket->is_open();
     }
 
-    void close() noexcept override
+    void close() override
     {
       if (stream_.socket->is_open())
       {

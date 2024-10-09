@@ -17,9 +17,9 @@ namespace jetblack::net
     virtual bool is_open() const noexcept = 0;
     virtual bool want_read() const noexcept = 0;
     virtual bool want_write() const noexcept = 0;
-    virtual bool read(Poller& poller) noexcept = 0;
-    virtual bool write() noexcept = 0;
-    virtual void close() noexcept = 0;
+    virtual bool read(Poller& poller) = 0;
+    virtual bool write() = 0;
+    virtual void close() = 0;
     virtual void enqueue(const std::vector<char>& buf) noexcept = 0;
     virtual std::optional<std::vector<char>> dequeue() noexcept = 0;
   };

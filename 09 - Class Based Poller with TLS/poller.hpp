@@ -139,9 +139,9 @@ namespace jetblack::net
 
         std::vector<std::vector<char>> bufs;
         auto buf = handler->dequeue();
-        while (buf.has_value())
+        while (buf)
         {
-          bufs.push_back(buf.value());
+          bufs.push_back(*buf);
           buf = handler->dequeue();
         }
 
@@ -185,7 +185,6 @@ namespace jetblack::net
             flags |= POLLIN;
         }
 
-        // We are interested in writes when we have data to write.
         if (handler->want_write())
         {
             flags |= POLLOUT;
@@ -199,8 +198,13 @@ namespace jetblack::net
 
     void remove_closed_handlers()
     {
+      auto closed_fds = find_closed_handler_fds();
+      remove_closed_handlers(closed_fds);
+    }
+
+    std::vector<int> find_closed_handler_fds()
+    {
       std::vector<int> closed_fds;
-      
       for (auto& [fd, handler] : handlers_)
       {
         if (!handler->is_open())
@@ -208,7 +212,11 @@ namespace jetblack::net
           closed_fds.push_back(fd);
         }
       }
+      return closed_fds;
+    }
 
+    void remove_closed_handlers(const std::vector<int>& closed_fds)
+    {
       for (auto fd : closed_fds)
       {
         auto handler = std::move(handlers_[fd]);

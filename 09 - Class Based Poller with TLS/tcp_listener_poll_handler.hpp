@@ -52,7 +52,7 @@ namespace jetblack::net
     bool want_read() const noexcept override { return true; }
     bool want_write() const noexcept override { return false; }
 
-    bool read(Poller& poller) noexcept override
+    bool read(Poller& poller) override
     {
       // Accept the client. This might throw an exception which will not be caught, as subsequent
       // connections will also fail.
@@ -73,10 +73,14 @@ namespace jetblack::net
       return true;
     }
 
-    bool write() noexcept override { return false; }
+    bool write() override { return false; }
 
-    void close() noexcept override
+    void close() override
     {
+      if (listener_.is_open())
+      {
+        listener_.close();
+      }
     }
 
     std::optional<std::vector<char>> dequeue() noexcept override { return std::nullopt; }

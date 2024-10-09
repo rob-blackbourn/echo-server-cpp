@@ -50,74 +50,100 @@ namespace jetblack::net
     bool want_read() const noexcept override { return stream_.file->is_open(); }
     bool want_write() const noexcept override { return stream_.file->is_open() && !write_queue_.empty(); }
 
-    bool read(Poller& poller) noexcept override
+    bool read(Poller& poller) override
     {
-      bool can_read = true;
-      while (can_read && stream_.file->is_open()) {
-        can_read = std::visit(match {
-          
-          [](blocked&&)
-          {
-            return false;
+      try
+      {
+        bool can_read = true;
+        while (can_read && stream_.file->is_open()) {
+          can_read = std::visit(match {
+            
+            [](blocked&&)
+            {
+              return false;
+            },
+
+            [](eof&&)
+            {
+              return false;
+            },
+
+            [&](std::vector<char>&& buf) mutable
+            {
+              read_queue_.push_back(std::move(buf));
+              return true;
+            }
+
           },
-
-          [](eof&&)
-          {
-            return false;
-          },
-
-          [&](std::vector<char>&& buf) mutable
-          {
-            read_queue_.push_back(std::move(buf));
-            return true;
-          }
-
-        },
-        stream_.read(read_bufsiz));
+          stream_.read(read_bufsiz));
+        }
       }
+      catch (...)
+      {
+        stream_.file->is_open(false);
+        throw;
+      }
+      
 
       return stream_.file->is_open();
     }
 
     bool write() noexcept override
     {
-      bool can_write = true;
-      while (can_write && stream_.file->is_open() && !write_queue_.empty()) {
+      try
+      {
+        bool can_write = true;
+        while (can_write && stream_.file->is_open() && !write_queue_.empty()) {
 
-        auto& [orig_buf, offset] = write_queue_.front();
-        std::size_t count = std::min(orig_buf.size() - offset, write_bufsiz);
-        const auto& buf = std::span<char>(orig_buf).subspan(offset, count);
+          auto& [orig_buf, offset] = write_queue_.front();
+          std::size_t count = std::min(orig_buf.size() - offset, write_bufsiz);
+          const auto& buf = std::span<char>(orig_buf).subspan(offset, count);
 
-        can_write = std::visit(match {
-          
-          [](eof&&)
-          {
-            return false;
-          },
+          can_write = std::visit(match {
+            
+            [](eof&&)
+            {
+              return false;
+            },
 
-          [](blocked&&)
-          {
-            return false;
-          },
+            [](blocked&&)
+            {
+              return false;
+            },
 
-          [&](ssize_t&& bytes_written) mutable
-          {
-            // Update the offset reference by the number of bytes written.
-            offset += bytes_written;
-            // Are we there yet?
-            if (offset == orig_buf.size()) {
-              // The buffer has been completely used. Remove it from the
-              // queue.
-              write_queue_.pop_front();
+            [&](ssize_t&& bytes_written) mutable
+            {
+              // Update the offset reference by the number of bytes written.
+              offset += bytes_written;
+              // Are we there yet?
+              if (offset == orig_buf.size()) {
+                // The buffer has been completely used. Remove it from the
+                // queue.
+                write_queue_.pop_front();
+              }
+              return true;
             }
-            return true;
-          }
-          
-        },
-        stream_.write(buf));
+            
+          },
+          stream_.write(buf));
+        }
       }
+      catch (...)
+      {
+        stream_.file->is_open(false);
+        throw;
+      }
+      
 
       return stream_.file->is_open();
+    }
+
+    void close() override
+    {
+      if (stream_.file->is_open())
+      {
+        stream_.file->close();
+      }
     }
 
     bool has_reads() const noexcept { return !read_queue_.empty(); }
@@ -132,7 +158,7 @@ namespace jetblack::net
       return buf;
     }
 
-    void enqueue(std::vector<char> buf) noexcept override
+    void enqueue(const std::vector<char>& buf) noexcept override
     {
       write_queue_.push_back(std::make_pair(std::move(buf), 0));
     }
