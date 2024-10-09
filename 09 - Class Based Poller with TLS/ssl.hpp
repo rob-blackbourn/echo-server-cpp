@@ -11,7 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 
-#include "tcp_types.hpp"
+#include "file_types.hpp"
 
 namespace jetblack::net
 {

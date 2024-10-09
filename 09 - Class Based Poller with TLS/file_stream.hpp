@@ -19,13 +19,10 @@
 #include <utility>
 
 #include "file.hpp"
+#include "file_types.hpp"
 
 namespace jetblack::net
 {
-
-  struct eof {};
-  struct blocked {};
-
   class FileStream
   {
   public:

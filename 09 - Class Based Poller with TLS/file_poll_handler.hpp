@@ -54,9 +54,9 @@ namespace jetblack::net
 
     bool read(Poller& poller) noexcept override
     {
-      bool ok = stream_.file->is_open();
-      while (ok) {
-        ok = std::visit(match {
+      bool can_read = true;
+      while (can_read && stream_.file->is_open()) {
+        can_read = std::visit(match {
           
           [](blocked&&)
           {
@@ -71,19 +71,20 @@ namespace jetblack::net
           [&](std::vector<char>&& buf) mutable
           {
             read_queue_.push_back(std::move(buf));
-            return stream_.file->is_open();
+            return true;
           }
 
         },
         stream_.read(read_bufsiz));
       }
+
       return stream_.file->is_open();
     }
 
     bool write() noexcept override
     {
-      bool can_write = stream_.file->is_open() && !write_queue_.empty();
-      while (can_write) {
+      bool can_write = true;
+      while (can_write && stream_.file->is_open() && !write_queue_.empty()) {
 
         auto& [orig_buf, offset] = write_queue_.front();
         std::size_t count = std::min(orig_buf.size() - offset, write_bufsiz);
@@ -111,7 +112,7 @@ namespace jetblack::net
               // queue.
               write_queue_.pop_front();
             }
-            return stream_.file->is_open() && !write_queue_.empty();
+            return true;
           }
           
         },
