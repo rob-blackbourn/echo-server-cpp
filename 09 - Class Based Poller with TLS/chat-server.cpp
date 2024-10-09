@@ -51,7 +51,7 @@ int main(int argc, char** argv)
     spdlog::info(
       "starting chat server on port {}{}.",
       static_cast<int>(port),
-      static_cast<int>(port), (use_tls ? " with TLS" : ""));
+      (use_tls ? " with TLS" : ""));
 
     std::optional<std::shared_ptr<SslContext>> ssl_ctx;
 
