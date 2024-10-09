@@ -9,6 +9,8 @@
 #include <string>
 #include <utility>
 
+#include "openssl_error.hpp"
+
 namespace jetblack::net
 {
   class SslContext
@@ -86,10 +88,7 @@ namespace jetblack::net
     {
       if (SSL_CTX_load_verify_locations(ctx_, path.c_str(), nullptr) == 0)
       {
-        auto error = ERR_get_error();
-        char buf[1024];
-        ERR_error_string_n(error, buf, sizeof(buf));
-        throw std::runtime_error(std::string(static_cast<const char*>(buf)));
+        throw std::runtime_error(openssl_strerror());
       }
     }
 
@@ -97,10 +96,7 @@ namespace jetblack::net
     {
       if (SSL_CTX_set_default_verify_paths(ctx_) == 0)
       {
-        auto error = ERR_get_error();
-        char buf[1024];
-        ERR_error_string_n(error, buf, sizeof(buf));
-        throw std::runtime_error(std::string(static_cast<const char*>(buf)));
+        throw std::runtime_error(openssl_strerror());
       }
     }
   };
@@ -126,10 +122,7 @@ namespace jetblack::net
     {
       if (SSL_CTX_use_certificate_file(ctx_, path.c_str(), type) <= 0)
       {
-        auto error = ERR_get_error();
-        char buf[1024];
-        ERR_error_string_n(error, buf, sizeof(buf));
-        throw std::runtime_error(std::string(static_cast<const char*>(buf)));
+        throw std::runtime_error(openssl_strerror());
       }
     }
     
@@ -137,10 +130,7 @@ namespace jetblack::net
     {
       if (SSL_CTX_use_certificate_chain_file(ctx_, path.c_str()) <= 0)
       {
-        auto error = ERR_get_error();
-        char buf[1024];
-        ERR_error_string_n(error, buf, sizeof(buf));
-        throw std::runtime_error(std::string(static_cast<const char*>(buf)));
+        throw std::runtime_error(openssl_strerror());
       }
     }
     
@@ -148,10 +138,7 @@ namespace jetblack::net
     {
       if (SSL_CTX_use_PrivateKey_file(ctx_, path.c_str(), type) <= 0)
       {
-        auto error = ERR_get_error();
-        char buf[1024];
-        ERR_error_string_n(error, buf, sizeof(buf));
-        throw std::runtime_error(std::string(static_cast<const char*>(buf)));
+        throw std::runtime_error(openssl_strerror());
       }
     }
   };
