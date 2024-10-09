@@ -23,12 +23,12 @@ namespace jetblack::net
     bool is_owner_;
 
   public:
-    Ssl(SSL* ssl, bool is_owner)
+    Ssl(SSL* ssl, bool is_owner) noexcept
       : ssl_(ssl),
         is_owner_(is_owner)
     {
     }
-    ~Ssl()
+    ~Ssl() noexcept
     {
       if (is_owner_)
       {
@@ -38,11 +38,11 @@ namespace jetblack::net
     }
     Ssl(const Ssl&) = delete;
     Ssl& operator=(const Ssl&) = delete;
-    Ssl(Ssl&& other)
+    Ssl(Ssl&& other) noexcept
     {
       *this = std::move(other);
     }
-    Ssl& operator=(Ssl&& other)
+    Ssl& operator=(Ssl&& other) noexcept
     {
       ssl_ = other.ssl_;
       is_owner_ = other.is_owner_;
@@ -164,7 +164,7 @@ namespace jetblack::net
       throw std::runtime_error(message);
     }
 
-    const X509* peer_certificate() const
+    const X509* peer_certificate() const noexcept
     {
       return SSL_get_peer_certificate(ssl_);
     }

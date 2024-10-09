@@ -19,29 +19,30 @@ namespace jetblack::net
     SSL_CTX* ctx_;
   public:
     SslContext() = delete;
-    SslContext(const SSL_METHOD* method)
+    SslContext(const SSL_METHOD* method) noexcept
       : ctx_(SSL_CTX_new(method))
     {
     }
-    ~SslContext()
+    ~SslContext() noexcept
     {
       SSL_CTX_free(ctx_);
+      ctx_ = nullptr;
     }
     SslContext(const SslContext&) = delete;
-    SslContext(SslContext&& other)
+    SslContext(SslContext&& other) noexcept
     {
       ctx_ = other.ctx_;
       other.ctx_ = nullptr;
     }
     SslContext& operator=(const SslContext&) = delete;
-    SslContext& operator=(SslContext&& other)
+    SslContext& operator=(SslContext&& other) noexcept
     {
       ctx_ = other.ctx_;
       other.ctx_ = nullptr;
       return *this;
     }
 
-    SSL_CTX* ptr() { return ctx_; }
+    SSL_CTX* ptr() noexcept { return ctx_; }
 
     void min_proto_version(int version)
     {
@@ -65,21 +66,21 @@ namespace jetblack::net
   class SslClientContext : public SslContext
   {
   public:
-    SslClientContext()
+    SslClientContext() noexcept
       : SslContext(TLS_client_method())
     {
     }
-    SslClientContext(SslClientContext&& other)
+    SslClientContext(SslClientContext&& other) noexcept
       : SslContext(std::move(other))
     {
     }
-    SslClientContext& operator = (SslClientContext&& other)
+    SslClientContext& operator = (SslClientContext&& other) noexcept
     {
       SslContext::operator=(std::move(other));
       return *this;
     }
 
-    void verify(int mode = SSL_VERIFY_PEER)
+    void verify(int mode = SSL_VERIFY_PEER) noexcept
     {
       SSL_CTX_set_verify(ctx_, mode, nullptr);
     }
@@ -104,15 +105,15 @@ namespace jetblack::net
   class SslServerContext : public SslContext
   {
   public:
-    SslServerContext()
+    SslServerContext() noexcept
       : SslContext(TLS_server_method())
     {
     }
-    SslServerContext(SslServerContext&& other)
+    SslServerContext(SslServerContext&& other) noexcept
       : SslContext(std::move(other))
     {
     }
-    SslServerContext& operator = (SslServerContext&& other)
+    SslServerContext& operator = (SslServerContext&& other) noexcept
     {
       SslContext::operator=(std::move(other));
       return *this;
