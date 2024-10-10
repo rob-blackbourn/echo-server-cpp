@@ -1,5 +1,5 @@
-#ifndef __utils_hpp
-#define __utils_hpp
+#ifndef JETBLACK_NET_UTILS_HPP
+#define JETBLACK_NET_UTILS_HPP
 
 #include <deque>
 #include <iostream>
@@ -97,4 +97,4 @@ inline void print_line(const std::string& message)
   print_line(stdout, message);
 }
 
-#endif // __utils_hpp
+#endif // JETBLACK_NET_UTILS_HPP
