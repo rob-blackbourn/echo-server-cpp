@@ -5,7 +5,6 @@
 
 #include <spdlog/spdlog.h>
 
-#include "tcp.hpp"
 #include "poller.hpp"
 #include "tcp_listener_poll_handler.hpp"
 #include "ssl_ctx.hpp"

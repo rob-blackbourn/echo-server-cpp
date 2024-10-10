@@ -13,7 +13,6 @@ COMMON_HPP = \
 	utils.hpp
 
 SERVER_HPP = \
-	tcp.hpp \
 	tcp_listener_socket.hpp \
 	tcp_server_socket.hpp \
 	poll_handler.hpp \
