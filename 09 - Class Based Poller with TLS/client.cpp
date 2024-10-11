@@ -10,14 +10,18 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
+#include "file.hpp"
+#include "poller.hpp"
+#include "file_poll_handler.hpp"
 #include "tcp_client_socket.hpp"
+#include "tcp_socket_poll_handler.hpp"
 #include "tcp_stream.hpp"
 #include "ssl_ctx.hpp"
 
-#include "external/popl.hpp"
-
 #include "match.hpp"
 #include "utils.hpp"
+
+#include "external/popl.hpp"
 
 using namespace jetblack::net;
 
@@ -86,113 +90,90 @@ int main(int argc, char** argv)
       port,
       (use_tls ? " using tls" : "")));
 
-    auto socket = std::make_shared<TcpClientSocket>();
-    socket->connect(host, port);
+    auto client_socket = std::make_unique<TcpClientSocket>();
+    client_socket->connect(host, port);
+    client_socket->blocking(false);
+    auto socket_fd = client_socket->fd();
+    auto socket = std::unique_ptr<TcpSocket>(client_socket.release());
 
-    auto stream = TcpStream::make(socket, ssl_ctx, host);
+    auto poller = Poller(
 
-    if (use_tls)
-    {
-      stream.do_handshake();
-      stream.verify();
-    }
-
-    while (1)
-    {
-      std::fputs("Enter a message: ", stdout);
-      char buf[1024];
-      if (fgets(buf, sizeof(buf), stdin) == nullptr)
+      // on open
+      [](Poller&, int fd)
       {
-        break;
-      }
-      std::string message {buf, buf + (std::strlen(buf) - 1)};
+        spdlog::info("on_open: {}", fd);
+      },
 
-      if (message == "SHUTDOWN")
+      // on close
+      [](Poller&, int fd)
       {
-        bool is_shutdown = false;
-        while (!is_shutdown)
+        spdlog::info("on_close: {}", fd);
+      },
+
+      // on read
+      [&socket_fd](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
+      {
+        spdlog::info("on_read: {}", fd);
+
+        for (auto& buf : bufs)
         {
-          print_line("shutting down");
-          is_shutdown = stream.do_shutdown();
-        }
-        continue;
-      }
-      else if (message == "CLOSE")
-      {
-        print_line("closing");
-        stream.socket->close();
-        continue;
-      }
-      else if (message == "EXIT")
-      {
-        break;
-      }
-
-      print_line(std::format("Sending \"{}\"", message));
-      bool write_ok = std::visit(
-        match
-        {
-          [](eof&&)
+          std::string s {buf.begin(), buf.end()};
+          spdlog::info("on_read: received {}", s);
+          if (fd == STDIN_FILENO)
           {
-            print_line("eof");
-            return false;
-          },
-
-          [](blocked&&)
-          {
-            print_line("block");
-            return false;
-          },
-
-          [](ssize_t&& bytes_written) mutable
-          {
-            print_line(std::format("wrote {} bytes", bytes_written));
-            return true;
-          }            
-        },
-        stream.write(message));
-      if (!write_ok)
-      {
-        print_line("write failed - quitting");
-        break;
-      }
-
-      std::vector<char> read_buf;
-      bool read_ok = std::visit(
-        match
-        {
-          [](blocked&&)
-          {
-            print_line("read blocked");
-            return false;
-          },
-
-          [](eof&&)
-          {
-            print_line("read eof");
-            return false;
-          },
-
-          [&](std::vector<char>&& buf) mutable
-          {
-            std::string message {buf.begin(), buf.end()};
-            print_line(std::format("read ok \"{}\"", message));
-            read_buf = std::move(buf);
-            return true;
+            if (s == "CLOSE\n")
+            {
+              poller.close(socket_fd);
+            }
+            else
+            {
+              poller.write(socket_fd, buf);
+            }
           }
-        },
-        stream.read(1024));
-      if (!read_ok)
+          else if (fd == socket_fd)
+          {
+            poller.write(STDOUT_FILENO, buf);
+          }
+        }
+      },
+
+      // on error
+      [](Poller&, int fd, std::exception error)
       {
-        print_line("read failed - quitting");
+        spdlog::info("on_error: {}, {}", fd, error.what());
       }
+
+    );
+
+    if (!ssl_ctx)
+    {
+      poller.add_handler(
+        std::make_unique<TcpSocketPollHandler>(std::move(socket), 8096, 8096));
+    }
+    else
+    {
+      poller.add_handler(
+        std::make_unique<TcpSocketPollHandler>(std::move(socket), *ssl_ctx, host, 8096, 8096));
     }
 
+    auto console_input = std::make_unique<File>(STDIN_FILENO, O_RDONLY);
+    console_input->blocking(false);
+    poller.add_handler(std::make_unique<FilePollHandler>(std::move(console_input), 1024, 1024));
+
+    auto console_output = std::make_unique<File>(STDOUT_FILENO, O_WRONLY);
+    console_output->blocking(false);
+    poller.add_handler(std::make_unique<FilePollHandler>(std::move(console_output), 1024, 1024));
+
+    poller.event_loop();
   }
-  catch(const std::exception& e)
+  catch(const std::exception& error)
   {
-    print_line(e.what());
+    spdlog::error("Server failed: {}", error.what());
   }
-  
+  catch (...)
+  {
+    spdlog::error("unknown error");
+  }
+ 
   return 0;
 }

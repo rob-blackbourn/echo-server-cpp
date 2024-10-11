@@ -14,11 +14,13 @@ namespace jetblack::net
   {
   protected:
     int fd_;
+    int oflag_;
     bool is_open_ { true };
 
   public:
-    explicit File(int fd) noexcept
-      : fd_(fd)
+    explicit File(int fd, int oflag = O_RDWR) noexcept
+      : fd_(fd),
+        oflag_(oflag)
     {
     }
 
@@ -57,6 +59,8 @@ namespace jetblack::net
 
     int fd() const noexcept { return fd_; }
 
+    int oflag() const noexcept { return oflag_; }
+
     bool is_open() const noexcept { return is_open_; }
     void is_open(bool value) { is_open_ = value; }
     
@@ -94,6 +98,13 @@ namespace jetblack::net
 
     bool blocking() const { return (fcntl_flags() & O_NONBLOCK) == O_NONBLOCK; }
     void blocking(bool is_blocking) { fcntl_flag(O_NONBLOCK, is_blocking); }
+
+    bool is_readonly() const noexcept { return oflag_ == O_RDONLY; }
+    bool is_writeonly() const noexcept { return oflag_ == O_WRONLY; }
+    bool is_readwrite() const noexcept { return oflag_ == O_RDWR; }
+
+    bool can_read() const noexcept { return is_open_ && (is_readonly() || is_readwrite()); }
+    bool can_write() const noexcept { return is_open_ && (is_writeonly() || is_readwrite()); }
   };
 
 }

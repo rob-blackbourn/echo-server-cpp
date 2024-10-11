@@ -20,7 +20,11 @@ SERVER_HPP = \
 	tcp_socket_poll_handler.hpp \
 	tcp_listener_poll_handler.hpp
 CLIENT_HPP = \
-	tcp_client_socket.hpp
+	tcp_client_socket.hpp \
+	poller.hpp \
+	poll_handler.hpp \
+	tcp_socket_poll_handler.hpp \
+	file_poll_handler.hpp
 
 .PHONEY: default
 default: all

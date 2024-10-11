@@ -47,8 +47,8 @@ namespace jetblack::net
     bool is_listener() const noexcept override { return false; }
     int fd() const noexcept override { return stream_.file->fd(); }
     bool is_open() const noexcept override { return stream_.file->is_open(); }
-    bool want_read() const noexcept override { return stream_.file->is_open(); }
-    bool want_write() const noexcept override { return stream_.file->is_open() && !write_queue_.empty(); }
+    bool want_read() const noexcept override { return stream_.file->can_read(); }
+    bool want_write() const noexcept override { return stream_.file->can_write() && !write_queue_.empty(); }
 
     bool read(Poller& poller) override
     {

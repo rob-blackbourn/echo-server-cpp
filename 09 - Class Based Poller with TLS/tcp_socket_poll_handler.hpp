@@ -78,9 +78,10 @@ namespace jetblack::net
     {
       try
       {
-        bool ok = stream_.socket->is_open();
-        while (ok) {
-          ok = std::visit(match {
+        bool can_read = true;
+        while (can_read && stream_.socket->is_open())
+        {
+          can_read = std::visit(match {
             
             [](blocked&&)
             {
@@ -95,7 +96,7 @@ namespace jetblack::net
             [&](std::vector<char>&& buf) mutable
             {
               read_queue_.push_back(std::move(buf));
-              return stream_.socket->is_open();
+              return true;
             }
 
           },
