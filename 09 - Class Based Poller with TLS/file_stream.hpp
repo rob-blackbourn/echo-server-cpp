@@ -28,7 +28,7 @@ namespace jetblack::net
   class FileStream
   {
   public:
-    typedef std::unique_ptr<File> file_pointer;
+    typedef std::shared_ptr<File> file_pointer;
 
   public:
     FileStream(file_pointer file) noexcept

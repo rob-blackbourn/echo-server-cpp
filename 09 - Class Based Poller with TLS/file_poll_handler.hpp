@@ -33,10 +33,10 @@ namespace jetblack::net
 
   public:
     FilePollHandler(
-      std::unique_ptr<File> file,
+      std::shared_ptr<File> file,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
-      : stream_(std::move(file)),
+      : stream_(file),
         read_bufsiz(read_bufsiz),
         write_bufsiz(write_bufsiz)
     {

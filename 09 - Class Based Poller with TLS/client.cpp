@@ -90,11 +90,9 @@ int main(int argc, char** argv)
       port,
       (use_tls ? " using tls" : "")));
 
-    auto client_socket = std::make_unique<TcpClientSocket>();
+    auto client_socket = std::make_shared<TcpClientSocket>();
     client_socket->connect(host, port);
     client_socket->blocking(false);
-    auto socket_fd = client_socket->fd();
-    auto socket = std::unique_ptr<TcpSocket>(client_socket.release());
 
     auto poller = Poller(
 
@@ -111,7 +109,7 @@ int main(int argc, char** argv)
       },
 
       // on read
-      [&socket_fd](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
+      [&client_socket](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
       {
         spdlog::info("on_read: {}", fd);
 
@@ -123,14 +121,14 @@ int main(int argc, char** argv)
           {
             if (s == "CLOSE\n")
             {
-              poller.close(socket_fd);
+              poller.close(client_socket->fd());
             }
             else
             {
-              poller.write(socket_fd, buf);
+              poller.write(client_socket->fd(), buf);
             }
           }
-          else if (fd == socket_fd)
+          else if (fd == client_socket->fd())
           {
             poller.write(STDOUT_FILENO, buf);
           }
@@ -148,21 +146,21 @@ int main(int argc, char** argv)
     if (!ssl_ctx)
     {
       poller.add_handler(
-        std::make_unique<TcpSocketPollHandler>(std::move(socket), 8096, 8096));
+        std::make_unique<TcpSocketPollHandler>(client_socket, 8096, 8096));
     }
     else
     {
       poller.add_handler(
-        std::make_unique<TcpSocketPollHandler>(std::move(socket), *ssl_ctx, host, 8096, 8096));
+        std::make_unique<TcpSocketPollHandler>(client_socket, *ssl_ctx, host, 8096, 8096));
     }
 
-    auto console_input = std::make_unique<File>(STDIN_FILENO, O_RDONLY);
+    auto console_input = std::make_shared<File>(STDIN_FILENO, O_RDONLY);
     console_input->blocking(false);
-    poller.add_handler(std::make_unique<FilePollHandler>(std::move(console_input), 1024, 1024));
+    poller.add_handler(std::make_unique<FilePollHandler>(console_input, 1024, 1024));
 
-    auto console_output = std::make_unique<File>(STDOUT_FILENO, O_WRONLY);
+    auto console_output = std::make_shared<File>(STDOUT_FILENO, O_WRONLY);
     console_output->blocking(false);
-    poller.add_handler(std::make_unique<FilePollHandler>(std::move(console_output), 1024, 1024));
+    poller.add_handler(std::make_unique<FilePollHandler>(console_output, 1024, 1024));
 
     poller.event_loop();
   }
