@@ -31,6 +31,7 @@ namespace jetblack::net
     const std::size_t read_bufsiz;
     const std::size_t write_bufsiz;
 
+  public:
     FilePollHandler(
       std::unique_ptr<File> file,
       std::size_t read_bufsiz,
