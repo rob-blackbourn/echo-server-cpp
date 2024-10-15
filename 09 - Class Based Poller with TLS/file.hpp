@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_FILE_HPP
-#define JETBLACK_NET_FILE_HPP
+#ifndef JETBLACK_IO_FILE_HPP
+#define JETBLACK_IO_FILE_HPP
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -7,7 +7,7 @@
 #include <cerrno>
 #include <system_error>
 
-namespace jetblack::net
+namespace jetblack::io
 {
 
   class File
@@ -109,4 +109,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_FILE_HPP
+#endif // JETBLACK_IO_FILE_HPP

@@ -1,10 +1,10 @@
-#ifndef JETBLACK_NET_POLL_HANDLER_HPP
-#define JETBLACK_NET_POLL_HANDLER_HPP
+#ifndef JETBLACK_IO_POLL_HANDLER_HPP
+#define JETBLACK_IO_POLL_HANDLER_HPP
 
 #include <optional>
 #include <vector>
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class Poller;
 
@@ -25,4 +25,4 @@ namespace jetblack::net
   };
 }
 
-#endif // JETBLACK_NET_POLL_HANDLER_HPP
+#endif // JETBLACK_IO_POLL_HANDLER_HPP

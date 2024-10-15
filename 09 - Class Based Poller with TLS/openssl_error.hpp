@@ -1,11 +1,11 @@
-#ifndef JETBLACK_NET_OPENSSL_ERROR_HPP
-#define JETBLACK_NET_OPENSSL_ERROR_HPP
+#ifndef JETBLACK_IO_OPENSSL_ERROR_HPP
+#define JETBLACK_IO_OPENSSL_ERROR_HPP
 
 #include <string>
 
 #include "openssl/err.h"
 
-namespace jetblack::net
+namespace jetblack::io
 {
 
   std::string openssl_strerror()
@@ -24,4 +24,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_OPENSSL_ERROR_HPP
+#endif // JETBLACK_IO_OPENSSL_ERROR_HPP

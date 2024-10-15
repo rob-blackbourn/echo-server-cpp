@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_TCP_CLIENT_SOCKET_HPP
-#define JETBLACK_NET_TCP_CLIENT_SOCKET_HPP
+#ifndef JETBLACK_IO_TCP_CLIENT_SOCKET_HPP
+#define JETBLACK_IO_TCP_CLIENT_SOCKET_HPP
 
 #include <arpa/inet.h>
 #include <sys/types.h>
@@ -19,7 +19,7 @@
 #include "tcp_socket.hpp"
 #include "tcp_address.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class TcpClientSocket :public TcpSocket
   {
@@ -65,4 +65,4 @@ namespace jetblack::net
   
 }
 
-#endif // JETBLACK_NET_TCP_CLIENT_SOCKET_HPP
+#endif // JETBLACK_IO_TCP_CLIENT_SOCKET_HPP

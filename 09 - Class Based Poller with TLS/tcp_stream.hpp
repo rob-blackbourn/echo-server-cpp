@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_TCP_STREAM_HPP
-#define JETBLACK_NET_TCP_STREAM_HPP
+#ifndef JETBLACK_IO_TCP_STREAM_HPP
+#define JETBLACK_IO_TCP_STREAM_HPP
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -30,7 +30,7 @@
 #include "ssl.hpp"
 #include "bio.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class TcpStream
   {
@@ -315,4 +315,4 @@ namespace jetblack::net
   };
 }
 
-#endif // JETBLACK_NET_TCP_STREAM_HPP
+#endif // JETBLACK_IO_TCP_STREAM_HPP

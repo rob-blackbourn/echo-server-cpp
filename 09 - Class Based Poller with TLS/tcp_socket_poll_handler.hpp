@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_SOCKET_POLL_HANDLER_HPP
-#define JETBLACK_NET_SOCKET_POLL_HANDLER_HPP
+#ifndef JETBLACK_IO_SOCKET_POLL_HANDLER_HPP
+#define JETBLACK_IO_SOCKET_POLL_HANDLER_HPP
 
 #include <poll.h>
 
@@ -21,7 +21,7 @@
 #include "poll_handler.hpp"
 #include "poller.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class TcpSocketPollHandler : public PollHandler
   {
@@ -195,4 +195,4 @@ namespace jetblack::net
   };
 }
 
-#endif // JETBLACK_NET_SOCKET_POLL_HANDLER_HPP
+#endif // JETBLACK_IO_SOCKET_POLL_HANDLER_HPP

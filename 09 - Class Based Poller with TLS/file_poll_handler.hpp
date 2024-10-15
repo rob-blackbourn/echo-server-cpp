@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_FILE_POLL_HANDLER_HPP
-#define JETBLACK_NET_FILE_POLL_HANDLER_HPP
+#ifndef JETBLACK_IO_FILE_POLL_HANDLER_HPP
+#define JETBLACK_IO_FILE_POLL_HANDLER_HPP
 
 #include <poll.h>
 
@@ -18,7 +18,7 @@
 #include "file.hpp"
 #include "file_stream.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class FilePollHandler : public PollHandler
   {
@@ -166,4 +166,4 @@ namespace jetblack::net
   };
 }
 
-#endif // JETBLACK_NET_FILE_POLL_HANDLER_HPP
+#endif // JETBLACK_IO_FILE_POLL_HANDLER_HPP

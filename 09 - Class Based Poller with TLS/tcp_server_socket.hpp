@@ -1,12 +1,12 @@
-#ifndef JETBLACK_NET_TCP_SERVER_SOCKET_HPP
-#define JETBLACK_NET_TCP_SERVER_SOCKET_HPP
+#ifndef JETBLACK_IO_TCP_SERVER_SOCKET_HPP
+#define JETBLACK_IO_TCP_SERVER_SOCKET_HPP
 
 #include <cstdint>
 #include <string>
 
 #include "tcp_socket.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
 
   class TcpServerSocket : public TcpSocket
@@ -29,4 +29,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_TCP_SERVER_SOCKET_HPP
+#endif // JETBLACK_IO_TCP_SERVER_SOCKET_HPP

@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_SSL_CTX_HPP
-#define JETBLACK_NET_SSL_CTX_HPP
+#ifndef JETBLACK_IO_SSL_CTX_HPP
+#define JETBLACK_IO_SSL_CTX_HPP
 
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
@@ -11,7 +11,7 @@
 
 #include "openssl_error.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class SslContext
   {
@@ -145,4 +145,4 @@ namespace jetblack::net
   };
 }
 
-#endif // JETBLACK_NET_SSL_CTX_HPP
+#endif // JETBLACK_IO_SSL_CTX_HPP

@@ -23,7 +23,7 @@
 
 #include "external/popl.hpp"
 
-using namespace jetblack::net;
+using namespace jetblack::io;
 
 std::shared_ptr<SslContext> make_ssl_context(std::optional<std::string> capath)
 {

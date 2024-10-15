@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_POLLER_HPP
-#define JETBLACK_NET_POLLER_HPP
+#ifndef JETBLACK_IO_POLLER_HPP
+#define JETBLACK_IO_POLLER_HPP
 
 #include <poll.h>
 
@@ -13,7 +13,7 @@
 
 #include "poll_handler.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   inline int poll(std::vector<pollfd> &fds)
   {
@@ -228,4 +228,4 @@ namespace jetblack::net
   };
 }
 
-#endif // JETBLACK_NET_POLLER_HPP
+#endif // JETBLACK_IO_POLLER_HPP

@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_BIO_HPP
-#define JETBLACK_NET_BIO_HPP
+#ifndef JETBLACK_IO_BIO_HPP
+#define JETBLACK_IO_BIO_HPP
 
 #include <optional>
 #include <span>
@@ -13,7 +13,7 @@
 #include "ssl_ctx.hpp"
 #include "ssl.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class Bio
   {
@@ -88,4 +88,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_BIO_HPP
+#endif // JETBLACK_IO_BIO_HPP

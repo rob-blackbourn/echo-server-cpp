@@ -1,5 +1,5 @@
-#ifndef JETBLACK_NET_FILE_STREAM_HPP
-#define JETBLACK_NET_FILE_STREAM_HPP
+#ifndef JETBLACK_IO_FILE_STREAM_HPP
+#define JETBLACK_IO_FILE_STREAM_HPP
 
 #include <arpa/inet.h>
 #include <netdb.h>
@@ -23,7 +23,7 @@
 #include "file.hpp"
 #include "file_types.hpp"
 
-namespace jetblack::net
+namespace jetblack::io
 {
   class FileStream
   {
@@ -97,4 +97,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_FILE_STREAM_HPP
+#endif // JETBLACK_IO_FILE_STREAM_HPP

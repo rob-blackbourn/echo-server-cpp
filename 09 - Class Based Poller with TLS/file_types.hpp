@@ -1,10 +1,10 @@
-#ifndef JETBLACK_NET_FILE_TYPES_HPP
-#define JETBLACK_NET_FILE_TYPES_HPP
+#ifndef JETBLACK_IO_FILE_TYPES_HPP
+#define JETBLACK_IO_FILE_TYPES_HPP
 
-namespace jetblack::net
+namespace jetblack::io
 {
   struct blocked {};
   struct eof {};
 }
 
-#endif // JETBLACK_NET_FILE_TYPES_HPP
+#endif // JETBLACK_IO_FILE_TYPES_HPP

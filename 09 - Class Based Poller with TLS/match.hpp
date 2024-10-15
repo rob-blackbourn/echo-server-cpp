@@ -1,9 +1,9 @@
-#ifndef JETBLACK_NET_MATCH_HPP
-#define JETBLACK_NET_MATCH_HPP
+#ifndef JETBLACK_IO_MATCH_HPP
+#define JETBLACK_IO_MATCH_HPP
 
 // For rust style matching with variants.
 
-namespace jetblack::net
+namespace jetblack::io
 {
   
   template<class... Ts> struct match : Ts... { using Ts::operator()...; };
@@ -11,4 +11,4 @@ namespace jetblack::net
 
 }
 
-#endif // JETBLACK_NET_MATCH_HPP
+#endif // JETBLACK_IO_MATCH_HPP
