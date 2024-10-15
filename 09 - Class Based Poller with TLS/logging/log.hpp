@@ -125,7 +125,7 @@ namespace jetblack::logging {
           log_record.msg,
           log_record.loc.file_name(),
           log_record.loc.line());
-        fputs(line.c_str(), stderr);
+        fputs(line.c_str(), stream_);
     }
   };
 
@@ -210,21 +210,6 @@ namespace jetblack::logging {
     void critical(std::string message, std::source_location loc = std::source_location::current())
     {
       log(Level::CRITICAL, message, loc);
-    }
-
-
-  private:
-    void handle(const LogRecord& log_record)
-    {
-        auto line = std::format(
-          "{:%Y-%m-%d %X} {} {} {} ({}, {})\n",
-          log_record.time,
-          to_string(log_record.level),
-          log_record.loc.function_name(),
-          log_record.msg,
-          log_record.loc.file_name(),
-          log_record.loc.line());
-        fputs(line.c_str(), stderr);
     }
   };
 

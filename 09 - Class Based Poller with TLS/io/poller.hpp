@@ -4,6 +4,7 @@
 #include <poll.h>
 
 #include <deque>
+#include <format>
 #include <functional>
 #include <map>
 #include <memory>
@@ -11,12 +12,15 @@
 #include <utility>
 #include <vector>
 
+#include "io/logger.hpp"
 #include "io/poll_handler.hpp"
 
 namespace jetblack::io
 {
   inline int poll(std::vector<pollfd> &fds)
   {
+    log.trace("polling");
+
     int active_fd_count = ::poll(fds.data(), fds.size(), -1);
     if (active_fd_count < 0)
     {
@@ -133,6 +137,8 @@ namespace jetblack::io
 
     bool handle_read(PollHandler* handler) noexcept
     {
+      log.trace(std::format("handling read for {}", handler->fd()));
+
       try
       {
         auto can_continue = handler->read(*this);
@@ -161,6 +167,8 @@ namespace jetblack::io
 
     bool handle_write(PollHandler* handler) noexcept
     {
+      log.trace(std::format("handling write for {}", handler->fd()));
+
       try
       {
         return handler->write();

@@ -7,9 +7,6 @@
 #include <utility>
 #include <variant>
 
-#include <fmt/format.h>
-#include <spdlog/spdlog.h>
-
 #include "io/file.hpp"
 #include "io/poller.hpp"
 #include "io/file_poll_handler.hpp"
@@ -17,13 +14,14 @@
 #include "io/tcp_socket_poll_handler.hpp"
 #include "io/tcp_stream.hpp"
 #include "io/ssl_ctx.hpp"
-
+#include "logging/log.hpp"
 #include "utils/match.hpp"
 #include "utils/utils.hpp"
 
 #include "external/popl.hpp"
 
 using namespace jetblack::io;
+namespace logging = jetblack::logging;
 
 std::shared_ptr<SslContext> make_ssl_context(std::optional<std::string> capath)
 {
@@ -99,24 +97,24 @@ int main(int argc, char** argv)
       // on open
       [](Poller&, int fd)
       {
-        spdlog::info("on_open: {}", fd);
+        logging::info(std::format("on_open: {}", fd));
       },
 
       // on close
       [](Poller&, int fd)
       {
-        spdlog::info("on_close: {}", fd);
+        logging::info(std::format("on_close: {}", fd));
       },
 
       // on read
       [&client_socket](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
       {
-        spdlog::info("on_read: {}", fd);
+        logging::info(std::format("on_read: {}", fd));
 
         for (auto& buf : bufs)
         {
           std::string s {buf.begin(), buf.end()};
-          spdlog::info("on_read: received {}", s);
+          logging::info(std::format("on_read: received {}", s));
           if (fd == STDIN_FILENO)
           {
             if (s == "CLOSE\n")
@@ -138,7 +136,7 @@ int main(int argc, char** argv)
       // on error
       [](Poller&, int fd, std::exception error)
       {
-        spdlog::info("on_error: {}, {}", fd, error.what());
+        logging::info(std::format("on_error: {}, {}", fd, error.what()));
       }
 
     );
@@ -166,11 +164,11 @@ int main(int argc, char** argv)
   }
   catch(const std::exception& error)
   {
-    spdlog::error("Server failed: {}", error.what());
+    logging::error(std::format("Server failed: {}", error.what()));
   }
   catch (...)
   {
-    spdlog::error("unknown error");
+    logging::error("unknown error");
   }
  
   return 0;

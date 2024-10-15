@@ -1,27 +1,28 @@
 #include <signal.h>
 
 #include <cstdio>
+#include <format>
 #include <set>
-
-#include <spdlog/spdlog.h>
 
 #include "io/poller.hpp"
 #include "io/tcp_listener_poll_handler.hpp"
 #include "io/ssl_ctx.hpp"
+#include "logging/log.hpp"
 #include "utils/utils.hpp"
 
 #include "external/popl.hpp"
 
 using namespace jetblack::io;
+namespace logging = jetblack::logging;
 
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
-  spdlog::info("making ssl server context");
+  logging::info("making ssl server context");
   auto ctx = std::make_shared<SslServerContext>();
   ctx->min_proto_version(TLS1_2_VERSION);
-  spdlog::info("Adding certificate file \"{}\"", certfile);
+  logging::info(std::format("Adding certificate file \"{}\"", certfile));
   ctx->use_certificate_file(certfile);
-  spdlog::info("Adding key file \"{}\"", keyfile);
+  logging::info(std::format("Adding key file \"{}\"", keyfile));
   ctx->use_private_key_file(keyfile);
   return ctx;
 }
@@ -54,10 +55,11 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-    spdlog::info(
-      "starting echo server on port {}{}.",
-      static_cast<int>(port),
-      (use_tls ? " with TLS" : ""));
+    logging::info(
+      std::format(
+        "starting echo server on port {}{}.",
+        static_cast<int>(port),
+        (use_tls ? " with TLS" : "")));
 
     std::optional<std::shared_ptr<SslContext>> ssl_ctx;
 
@@ -83,27 +85,27 @@ int main(int argc, char** argv)
       // on open
       [](Poller&, int fd)
       {
-        spdlog::info("on_open: {}", fd);
+        logging::info(std::format("on_open: {}", fd));
       },
 
       // on close
       [](Poller&, int fd)
       {
-        spdlog::info("on_close: {}", fd);
+        logging::info(std::format("on_close: {}", fd));
       },
 
       // on read
       [](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
       {
-        spdlog::info("on_read: {}", fd);
+        logging::info(std::format("on_read: {}", fd));
 
         for (auto& buf : bufs)
         {
           std::string s {buf.begin(), buf.end()};
-          spdlog::info("on_read: received {}", s);
+          logging::info(std::format("on_read: received {}", s));
           if (s == "KILLME")
           {
-            spdlog::info("closing {}", fd);
+            logging::info(std::format("closing {}", fd));
             poller.close(fd);
           }
           else
@@ -116,7 +118,7 @@ int main(int argc, char** argv)
       // on error
       [](Poller&, int fd, std::exception error)
       {
-        spdlog::info("on_error: {}, {}", fd, error.what());
+        logging::info(std::format("on_error: {}, {}", fd, error.what()));
       }
 
     );
@@ -125,14 +127,14 @@ int main(int argc, char** argv)
   }
   catch(const std::exception& error)
   {
-    spdlog::error("Server failed: {}", error.what());
+    logging::error(std::format("Server failed: {}", error.what()));
   }
   catch (...)
   {
-    spdlog::error("unknown error");
+    logging::error(std::format("unknown error"));
   }
 
-  spdlog::info("server stopped");
+  logging::info("server stopped");
 
   return 0;
 }

@@ -1,15 +1,16 @@
+#include <format>
 #include <set>
-
-#include <spdlog/spdlog.h>
 
 #include "io/poller.hpp"
 #include "io/tcp_listener_poll_handler.hpp"
 #include "io/ssl_ctx.hpp"
+#include "logging/log.hpp"
 #include "utils/utils.hpp"
 
 #include "external/popl.hpp"
 
 using namespace jetblack::io;
+namespace logging = jetblack::logging;
 
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
@@ -46,10 +47,11 @@ int main(int argc, char** argv)
       exit(1);
     }
 
-    spdlog::info(
-      "starting chat server on port {}{}.",
-      static_cast<int>(port),
-      (use_tls ? " with TLS" : ""));
+    logging::info(
+      std::format(
+        "starting chat server on port {}{}.",
+        static_cast<int>(port),
+        (use_tls ? " with TLS" : "")));
 
     std::optional<std::shared_ptr<SslContext>> ssl_ctx;
 
@@ -76,28 +78,28 @@ int main(int argc, char** argv)
 
       [&clients](Poller&, int fd)
       {
-        spdlog::info("on_open: {}", fd);
+        logging::info(std::format("on_open: {}", fd));
         clients.insert(fd);
       },
 
       [&clients](Poller&, int fd)
       {
-        spdlog::info("on_close: {}", fd);
+        logging::info(std::format("on_close: {}", fd));
         clients.erase(fd);
       },
 
       [&clients](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
       {
-        spdlog::info("on_read: {}", fd);
+        logging::info(std::format("on_read: {}", fd));
 
         for (auto& buf : bufs)
         {
-          spdlog::info("on_read: received {}", to_string(buf));
+          logging::info(std::format("on_read: received {}", to_string(buf)));
           for (auto client_fd : clients)
           {
             if (client_fd != fd)
             {
-              spdlog::info("on_read: sending to {}", client_fd);
+              logging::info(std::format("on_read: sending to {}", client_fd));
               poller.write(client_fd, buf);
             }
           }
@@ -106,7 +108,7 @@ int main(int argc, char** argv)
       
       [](Poller&, int fd, std::exception error)
       {
-        spdlog::info("on_error: {}, {}", fd, error.what());
+        logging::info(std::format("on_error: {}, {}", fd, error.what()));
       }
     );
     poller.add_handler(std::make_unique<TcpListenerPollHandler>(port, ssl_ctx));
@@ -114,7 +116,7 @@ int main(int argc, char** argv)
   }
   catch(const std::exception& error)
   {
-    spdlog::error("Server failed: {}", error.what());
+    logging::error(std::format("Server failed: {}", error.what()));
   }
 
   return 0;
