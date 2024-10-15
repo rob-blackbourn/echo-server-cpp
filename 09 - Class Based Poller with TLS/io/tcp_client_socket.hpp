@@ -16,8 +16,8 @@
 #include <string>
 #include <system_error>
 
-#include "tcp_socket.hpp"
-#include "tcp_address.hpp"
+#include "io/tcp_socket.hpp"
+#include "io/tcp_address.hpp"
 
 namespace jetblack::io
 {

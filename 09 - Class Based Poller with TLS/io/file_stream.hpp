@@ -20,8 +20,8 @@
 #include <variant>
 #include <vector>
 
-#include "file.hpp"
-#include "file_types.hpp"
+#include "io/file.hpp"
+#include "io/file_types.hpp"
 
 namespace jetblack::io
 {

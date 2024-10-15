@@ -9,9 +9,9 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 
-#include "tcp_socket.hpp"
-#include "ssl_ctx.hpp"
-#include "ssl.hpp"
+#include "io/tcp_socket.hpp"
+#include "io/ssl_ctx.hpp"
+#include "io/ssl.hpp"
 
 namespace jetblack::io
 {

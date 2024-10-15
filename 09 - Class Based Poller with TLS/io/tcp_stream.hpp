@@ -22,13 +22,13 @@
 #include <variant>
 #include <vector>
 
-#include "match.hpp"
+#include "utils/match.hpp"
 
-#include "tcp_socket.hpp"
-#include "file_types.hpp"
-#include "ssl_ctx.hpp"
-#include "ssl.hpp"
-#include "bio.hpp"
+#include "io/tcp_socket.hpp"
+#include "io/file_types.hpp"
+#include "io/ssl_ctx.hpp"
+#include "io/ssl.hpp"
+#include "io/bio.hpp"
 
 namespace jetblack::io
 {

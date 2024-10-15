@@ -3,7 +3,7 @@
 
 #include <string>
 
-#include "openssl/err.h"
+#include <openssl/err.h>
 
 namespace jetblack::io
 {

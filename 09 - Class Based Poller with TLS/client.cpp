@@ -10,16 +10,16 @@
 #include <fmt/format.h>
 #include <spdlog/spdlog.h>
 
-#include "file.hpp"
-#include "poller.hpp"
-#include "file_poll_handler.hpp"
-#include "tcp_client_socket.hpp"
-#include "tcp_socket_poll_handler.hpp"
-#include "tcp_stream.hpp"
-#include "ssl_ctx.hpp"
+#include "io/file.hpp"
+#include "io/poller.hpp"
+#include "io/file_poll_handler.hpp"
+#include "io/tcp_client_socket.hpp"
+#include "io/tcp_socket_poll_handler.hpp"
+#include "io/tcp_stream.hpp"
+#include "io/ssl_ctx.hpp"
 
-#include "match.hpp"
-#include "utils.hpp"
+#include "utils/match.hpp"
+#include "utils/utils.hpp"
 
 #include "external/popl.hpp"
 

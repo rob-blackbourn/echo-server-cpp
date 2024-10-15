@@ -9,7 +9,7 @@
 #include <string>
 #include <utility>
 
-#include "openssl_error.hpp"
+#include "io/openssl_error.hpp"
 
 namespace jetblack::io
 {

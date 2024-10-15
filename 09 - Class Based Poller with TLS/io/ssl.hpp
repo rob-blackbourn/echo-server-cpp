@@ -11,7 +11,7 @@
 #include <openssl/err.h>
 #include <openssl/bio.h>
 
-#include "file_types.hpp"
+#include "io/file_types.hpp"
 
 namespace jetblack::io
 {

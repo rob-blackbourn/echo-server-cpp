@@ -13,8 +13,8 @@
 #include <stdexcept>
 #include <system_error>
 
-#include "tcp_socket.hpp"
-#include "tcp_server_socket.hpp"
+#include "io/tcp_socket.hpp"
+#include "io/tcp_server_socket.hpp"
 
 namespace jetblack::io
 {
