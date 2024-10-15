@@ -3,7 +3,7 @@
 
 // For rust style matching with variants.
 
-namespace jetblack::io
+namespace jetblack::utils
 {
   
   template<class... Ts> struct match : Ts... { using Ts::operator()...; };

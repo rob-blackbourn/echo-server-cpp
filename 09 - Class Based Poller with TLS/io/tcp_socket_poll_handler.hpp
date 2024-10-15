@@ -21,6 +21,8 @@
 
 namespace jetblack::io
 {
+  using jetblack::utils::match;
+
   class TcpSocketPollHandler : public PollHandler
   {
   private:

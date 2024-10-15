@@ -32,6 +32,8 @@
 
 namespace jetblack::io
 {
+  using jetblack::utils::match;
+
   class TcpStream
   {
   public:

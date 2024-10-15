@@ -20,6 +20,8 @@
 
 namespace jetblack::io
 {
+  using jetblack::utils::match;
+
   class FilePollHandler : public PollHandler
   {
   private:
