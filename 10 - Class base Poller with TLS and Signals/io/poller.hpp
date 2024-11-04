@@ -141,7 +141,7 @@ namespace jetblack::io
       action.sa_handler = &handle_signal;
       sigemptyset(&action.sa_mask);
       action.sa_flags = 0;
-      if (sigaction(SIGINT, &action, nullptr) != 0)
+      if (sigaction(signum, &action, nullptr) != 0)
         throw std::system_error(errno, std::generic_category(), "failed to set signal");
     }
 

@@ -116,7 +116,8 @@ int main(int argc, char** argv)
       logging::info(std::format("Error from client {}: {}", fd, error.what()));
     };
 
-    // poller.register_signal(SIGINT);
+    poller.register_signal(SIGHUP);
+    poller.on_interrupt = []() { logging::info("interrupt!!!"); };
 
     poller.event_loop();
   }
