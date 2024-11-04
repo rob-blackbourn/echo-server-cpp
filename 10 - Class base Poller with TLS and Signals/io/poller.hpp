@@ -2,6 +2,7 @@
 #define SQUAWKBUS_IO_POLLER_HPP
 
 #include <poll.h>
+#include <signal.h>
 
 #include <csignal>
 #include <deque>
@@ -53,6 +54,8 @@ namespace jetblack::io
   private:
     handler_map handlers_;
 
+    inline static sig_atomic_t last_signal_ = 0;
+
   public:
     std::optional<std::function<void()>> on_startup;
     std::optional<std::function<void()>> on_interrupt;
@@ -91,7 +94,7 @@ namespace jetblack::io
       }
     }
 
-    void event_loop(volatile std::sig_atomic_t& signal, int backlog = 10)
+    void event_loop(int backlog = 10)
     {
       if (on_startup)
         (*on_startup)();
@@ -102,9 +105,9 @@ namespace jetblack::io
 
         int active_fd_count = poll(fds, 1000);
 
-        if (signal != 0)
+        if (Poller::last_signal_ != 0)
         {
-          signal = 0;
+          Poller::last_signal_ = 0;
           try
           {
             if (on_interrupt)
@@ -130,6 +133,16 @@ namespace jetblack::io
 
         remove_closed_handlers();
       }
+    }
+
+    static void register_signal(int signum)
+    {
+      struct sigaction action;
+      action.sa_handler = &handle_signal;
+      sigemptyset(&action.sa_mask);
+      action.sa_flags = 0;
+      if (sigaction(SIGINT, &action, nullptr) != 0)
+        throw std::system_error(errno, std::generic_category(), "failed to set signal");
     }
 
   private:
@@ -258,6 +271,12 @@ namespace jetblack::io
           (*on_close)(fd);
       }
     }
+
+    static void handle_signal(int signum)
+    {
+      Poller::last_signal_ = signum;
+    }
+
   };
 }
 

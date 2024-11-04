@@ -15,11 +15,6 @@ namespace logging = jetblack::logging;
 
 using namespace jetblack::io;
 
-namespace
-{
-  volatile std::sig_atomic_t last_signal = 0;
-}
-
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
   auto ctx = std::make_shared<SslServerContext>();
@@ -28,59 +23,6 @@ std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const 
   ctx->use_private_key_file(keyfile);
   return ctx;
 }
-
-class ChatServer : public PollClient
-{
-private:
-  std::set<int> clients_;
-
-private:
-  // The implementation of PollClient
-  void on_startup(Poller& poller) override
-  {
-    logging::info("on_startup");
-  }
-
-  void on_interrupt(Poller& poller) override
-  {
-    logging::info("on_interrupt");
-  }
-
-  void on_open(Poller& poller, int fd, const std::string& host, std::uint16_t port) override
-  {
-    logging::info(std::format("on_open: {}", fd));
-    clients_.insert(fd);
-  }
-
-  void on_close(Poller& poller, int fd) override
-  {
-    logging::info(std::format("on_close: {}", fd));
-    clients_.erase(fd);
-  }
-
-  void on_read(Poller& poller, int fd, std::vector<std::vector<char>>&& bufs) override
-  {
-    logging::info(std::format("on_read: {}", fd));
-
-    for (auto& buf : bufs)
-    {
-      logging::info(std::format("on_read: received {}", to_string(buf)));
-      for (auto client_fd : clients_)
-      {
-        if (client_fd != fd)
-        {
-          logging::info(std::format("on_read: sending to {}", client_fd));
-          poller.write(client_fd, buf);
-        }
-      }
-    }
-  }
-
-  void on_error(Poller& poller, int fd, std::exception error) override
-  {
-    logging::info(std::format("on_error: {}, {}", fd, error.what()));
-  }
-};
 
 int main(int argc, char** argv)
 {
@@ -133,8 +75,6 @@ int main(int argc, char** argv)
       ssl_ctx = make_ssl_context(certfile_option->value(), keyfile_option->value());
     }
 
-    auto chat_server = std::make_shared<ChatServer>();
-
     auto poller = Poller();
 
     poller.add_handler(
@@ -146,26 +86,26 @@ int main(int argc, char** argv)
 
     poller.on_open = [&clients](int fd, const std::string& host, std::uint16_t port)
     {
-      logging::info(std::format("on_open: {}", fd));
+      logging::info(std::format("Add client {}", fd));
       clients.insert(fd);
     };
     poller.on_close = [&clients](int fd)
     {
-      logging::info(std::format("on_close: {}", fd));
+      logging::info(std::format("Removing client {}", fd));
       clients.erase(fd);
     };
     poller.on_read = [&poller, &clients](int fd, std::vector<std::vector<char>>&& bufs)
     {
-      logging::info(std::format("on_read: {}", fd));
+      logging::info(std::format("Read from client {}", fd));
 
       for (auto& buf : bufs)
       {
-        logging::info(std::format("on_read: received {}", to_string(buf)));
+        logging::info(std::format("received {}", to_string(buf)));
         for (auto client_fd : clients)
         {
           if (client_fd != fd)
           {
-            logging::info(std::format("on_read: sending to {}", client_fd));
+            logging::info(std::format("sending to {}", client_fd));
             poller.write(client_fd, buf);
           }
         }
@@ -173,10 +113,12 @@ int main(int argc, char** argv)
     };
     poller.on_error = [](int fd, std::exception error)
     {
-      logging::info(std::format("on_error: {}, {}", fd, error.what()));
+      logging::info(std::format("Error from client {}: {}", fd, error.what()));
     };
 
-    poller.event_loop(last_signal);
+    // poller.register_signal(SIGINT);
+
+    poller.event_loop();
   }
   catch(const std::exception& error)
   {

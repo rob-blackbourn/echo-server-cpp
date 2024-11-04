@@ -1,5 +1,3 @@
-#include <signal.h>
-
 #include <cstdio>
 #include <format>
 #include <set>
@@ -15,11 +13,6 @@
 namespace logging = jetblack::logging;
 
 using namespace jetblack::io;
-
-namespace
-{
-  volatile std::sig_atomic_t last_signal = 0;
-}
 
 std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const std::string& keyfile)
 {
@@ -121,7 +114,7 @@ int main(int argc, char** argv)
       logging::info(std::format("on_error: {}, {}", fd, error.what()));
     };
 
-    poller.event_loop(last_signal);
+    poller.event_loop();
   }
   catch(const std::exception& error)
   {
