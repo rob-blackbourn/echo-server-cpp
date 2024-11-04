@@ -33,53 +33,6 @@ std::shared_ptr<SslContext> make_ssl_context(const std::string& certfile, const 
   return ctx;
 }
 
-class EchoServer : public PollClient
-{
-  void on_startup(Poller& poller) override
-  {
-  }
-
-  void on_interrupt(Poller& poller) override
-  {
-  }
-
-  void on_open(Poller& poller, int fd, const std::string& host, std::uint16_t port) override
-  {
-    logging::info(std::format("on_open: {}", fd));
-  }
-
-  void on_close(Poller& poller, int fd) override
-  {
-    logging::info(std::format("on_close: {}", fd));
-  }
-
-  void on_read(Poller& poller, int fd, std::vector<std::vector<char>>&& bufs) override
-  {
-    logging::info(std::format("on_read: {}", fd));
-
-    for (auto& buf : bufs)
-    {
-      std::string s {buf.begin(), buf.end()};
-      logging::info(std::format("on_read: received {}", s));
-      if (s == "KILLME")
-      {
-        logging::info(std::format("closing {}", fd));
-        poller.close(fd);
-      }
-      else
-      {
-        poller.write(fd, buf);
-      }
-    }
-  }
-
-  void on_error(Poller& poller, int fd, std::exception error) override
-  {
-    logging::info(std::format("on_error: {}, {}", fd, error.what()));
-  }
-
-};
-
 int main(int argc, char** argv)
 {
   // signal(SIGPIPE,SIG_IGN);
@@ -133,11 +86,41 @@ int main(int argc, char** argv)
       ssl_ctx = make_ssl_context(certfile_option->value(), keyfile_option->value());
     }
 
-    auto poller = Poller(std::make_shared<EchoServer>());
+    auto poller = Poller();
+
     poller.add_handler(
       std::make_unique<TcpListenerPollHandler>(port, ssl_ctx),
       "0.0.0.0",
       port);
+
+    poller.on_open = [](int fd, const std::string& host, std::uint16_t port) {
+      logging::info(std::format("on_open: {}:{} (P{})", host, port, fd));
+    };
+    poller.on_close = [](int fd) {
+      logging::info(std::format("on_close: {}", fd));
+    };
+    poller.on_read = [&poller](int fd, std::vector<std::vector<char>>&& bufs) {
+      logging::info(std::format("on_read: {}", fd));
+
+      for (auto& buf : bufs)
+      {
+        std::string s {buf.begin(), buf.end()};
+        logging::info(std::format("on_read: received {}", s));
+        if (s == "KILLME")
+        {
+          logging::info(std::format("closing {}", fd));
+          poller.close(fd);
+        }
+        else
+        {
+          poller.write(fd, buf);
+        }
+      }
+    };
+    poller.on_error = [](int fd, std::exception error) {
+      logging::info(std::format("on_error: {}, {}", fd, error.what()));
+    };
+
     poller.event_loop(last_signal);
   }
   catch(const std::exception& error)

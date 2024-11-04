@@ -135,11 +135,47 @@ int main(int argc, char** argv)
 
     auto chat_server = std::make_shared<ChatServer>();
 
-    auto poller = Poller(chat_server);
+    auto poller = Poller();
+
     poller.add_handler(
       std::make_unique<TcpListenerPollHandler>(port, ssl_ctx),
       "0.0.0.0",
       port);
+
+    std::set<int> clients;
+
+    poller.on_open = [&clients](int fd, const std::string& host, std::uint16_t port)
+    {
+      logging::info(std::format("on_open: {}", fd));
+      clients.insert(fd);
+    };
+    poller.on_close = [&clients](int fd)
+    {
+      logging::info(std::format("on_close: {}", fd));
+      clients.erase(fd);
+    };
+    poller.on_read = [&poller, &clients](int fd, std::vector<std::vector<char>>&& bufs)
+    {
+      logging::info(std::format("on_read: {}", fd));
+
+      for (auto& buf : bufs)
+      {
+        logging::info(std::format("on_read: received {}", to_string(buf)));
+        for (auto client_fd : clients)
+        {
+          if (client_fd != fd)
+          {
+            logging::info(std::format("on_read: sending to {}", client_fd));
+            poller.write(client_fd, buf);
+          }
+        }
+      }
+    };
+    poller.on_error = [](int fd, std::exception error)
+    {
+      logging::info(std::format("on_error: {}, {}", fd, error.what()));
+    };
+
     poller.event_loop(last_signal);
   }
   catch(const std::exception& error)

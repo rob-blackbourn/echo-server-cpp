@@ -52,11 +52,17 @@ namespace jetblack::io
 
   private:
     handler_map handlers_;
-    client_pointer client_;
 
   public:
-    Poller(client_pointer client)
-      : client_(client)
+    std::optional<std::function<void()>> on_startup;
+    std::optional<std::function<void()>> on_interrupt;
+    std::optional<std::function<void(int fd, const std::string& host, std::uint16_t port)>> on_open;
+    std::optional<std::function<void(int fd)>> on_close;
+    std::optional<std::function<void(int fd, std::vector<std::vector<char>>&& bufs)>> on_read;
+    std::optional<std::function<void(int fd, std::exception error)>> on_error;
+
+  public:
+    Poller()
     {
     }
 
@@ -65,8 +71,8 @@ namespace jetblack::io
       int fd = handler->fd();
       bool is_listener = handler->is_listener();
       handlers_[fd] = std::move(handler);
-      if (!is_listener)
-        client_->on_open(*this, fd, host, port);
+      if (!is_listener && on_open)
+        (*on_open)(fd, host, port);
     }
 
     void write(int fd, const std::vector<char>& buf) noexcept
@@ -87,7 +93,8 @@ namespace jetblack::io
 
     void event_loop(volatile std::sig_atomic_t& signal, int backlog = 10)
     {
-      client_->on_startup(*this);
+      if (on_startup)
+        (*on_startup)();
 
       while (true) {
 
@@ -100,7 +107,8 @@ namespace jetblack::io
           signal = 0;
           try
           {
-            client_->on_interrupt(*this);
+            if (on_interrupt)
+              (*on_interrupt)();
           }
           catch (...)
           {
@@ -167,14 +175,16 @@ namespace jetblack::io
 
         if (!bufs.empty())
         {
-          client_->on_read(*this, handler->fd(), std::move(bufs));
+          if (on_read)
+            (*on_read)(handler->fd(), std::move(bufs));
         }
 
         return can_continue;
       }
       catch(const std::exception& error)
       {
-        client_->on_error(*this, handler->fd(), error);
+        if (on_error)
+          (*on_error)(handler->fd(), error);
         return false;
       }
     }
@@ -189,7 +199,8 @@ namespace jetblack::io
       }
       catch(const std::exception& error)
       {
-        client_->on_error(*this, handler->fd(), error);
+        if (on_error)
+          (*on_error)(handler->fd(), error);
         return false;
       }
     }
@@ -243,8 +254,8 @@ namespace jetblack::io
       {
         auto handler = std::move(handlers_[fd]);
         handlers_.erase(fd);
-        if (!handler->is_listener())
-          client_->on_close(*this, fd);
+        if (!handler->is_listener() && on_close)
+          (*on_close)(fd);
       }
     }
   };
