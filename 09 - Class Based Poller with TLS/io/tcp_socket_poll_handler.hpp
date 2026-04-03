@@ -17,7 +17,7 @@
 #include "io/tcp_stream.hpp"
 #include "io/ssl_ctx.hpp"
 #include "io/event_handler.hpp"
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 
 namespace jetblack::io
 {
@@ -74,7 +74,7 @@ namespace jetblack::io
     bool want_read() const noexcept override { return is_open() || stream_.want_read(); }
     bool want_write() const noexcept override { return is_open() && (!write_queue_.empty() || stream_.want_write()); }
 
-    bool read([[maybe_unused]] Poller& poller) override
+    bool read([[maybe_unused]] EventLoop& event_loop) override
     {
       try
       {

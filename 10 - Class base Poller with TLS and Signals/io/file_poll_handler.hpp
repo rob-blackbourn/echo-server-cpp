@@ -14,7 +14,7 @@
 #include "utils/match.hpp"
 
 #include "io/event_handler.hpp"
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 #include "io/file.hpp"
 #include "io/file_stream.hpp"
 
@@ -53,7 +53,7 @@ namespace jetblack::io
     bool want_read() const noexcept override { return stream_.file->can_read(); }
     bool want_write() const noexcept override { return stream_.file->can_write() && !write_queue_.empty(); }
 
-    bool read([[maybe_unused]] Poller& poller) override
+    bool read([[maybe_unused]] EventLoop& event_loop) override
     {
       try
       {

@@ -3,7 +3,7 @@
 #include <format>
 #include <set>
 
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 #include "io/tcp_listener_poll_handler.hpp"
 #include "io/ssl_ctx.hpp"
 #include "logging/log.hpp"
@@ -75,26 +75,26 @@ int main(int argc, char** argv)
       ssl_ctx = make_ssl_context(certfile_option->value(), keyfile_option->value());
     }
 
-    auto poller = Poller();
+    auto event_loop = EventLoop();
 
-    poller.add_handler(
+    event_loop.add_handler(
       std::make_unique<TcpListenerPollHandler>(port, ssl_ctx),
       "0.0.0.0",
       port);
 
     std::set<int> clients;
 
-    poller.on_open = [&clients](int fd, const std::string& host, std::uint16_t port)
+    event_loop.on_open = [&clients](int fd, const std::string& host, std::uint16_t port)
     {
       logging::info(std::format("Add client {} ({}:{})", fd, host, port));
       clients.insert(fd);
     };
-    poller.on_close = [&clients](int fd)
+    event_loop.on_close = [&clients](int fd)
     {
       logging::info(std::format("Removing client {}", fd));
       clients.erase(fd);
     };
-    poller.on_read = [&poller, &clients](int fd, std::vector<std::vector<char>>&& bufs)
+    event_loop.on_read = [&event_loop, &clients](int fd, std::vector<std::vector<char>>&& bufs)
     {
       logging::info(std::format("Read from client {}", fd));
 
@@ -106,20 +106,20 @@ int main(int argc, char** argv)
           if (client_fd != fd)
           {
             logging::info(std::format("sending to {}", client_fd));
-            poller.write(client_fd, buf);
+            event_loop.write(client_fd, buf);
           }
         }
       }
     };
-    poller.on_error = [](int fd, std::exception error)
+    event_loop.on_error = [](int fd, std::exception error)
     {
       logging::info(std::format("Error from client {}: {}", fd, error.what()));
     };
 
-    poller.register_signal(SIGHUP);
-    poller.on_interrupt = []() { logging::info("interrupt!!!"); };
+    event_loop.register_signal(SIGHUP);
+    event_loop.on_interrupt = []() { logging::info("interrupt!!!"); };
 
-    poller.event_loop();
+    event_loop.event_loop();
   }
   catch(const std::exception& error)
   {

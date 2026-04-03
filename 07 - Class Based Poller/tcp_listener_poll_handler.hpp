@@ -17,7 +17,7 @@
 #include "match.hpp"
 
 #include "event_handler.hpp"
-#include "poller.hpp"
+#include "event_loop.hpp"
 #include "tcp_socket_poll_handler.hpp"
 
 namespace jetblack::net
@@ -47,14 +47,14 @@ namespace jetblack::net
     bool want_read() const noexcept override { return true; }
     bool want_write() const noexcept override { return false; }
 
-    bool read(Poller& poller) noexcept override
+    bool read(EventLoop& event_loop) noexcept override
     {
       // Accept the client. This might throw an exception which will not be caught, as subsequent
       // connections will also fail.
       auto client = listener_.accept();
       client->blocking(false);
 
-      poller.add_handler(std::make_unique<TcpSocketPollHandler>(std::move(client), 8096, 8096));
+      event_loop.add_handler(std::make_unique<TcpSocketPollHandler>(std::move(client), 8096, 8096));
 
       return true;
     }

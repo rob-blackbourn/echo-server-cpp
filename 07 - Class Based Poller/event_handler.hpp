@@ -6,7 +6,7 @@
 
 namespace jetblack::net
 {
-  class Poller;
+  class EventLoop;
 
   class EventHandler
   {
@@ -17,7 +17,7 @@ namespace jetblack::net
     virtual bool is_open() const noexcept = 0;
     virtual bool want_read() const noexcept = 0;
     virtual bool want_write() const noexcept = 0;
-    virtual bool read(Poller& poller) noexcept = 0;
+    virtual bool read(EventLoop& event_loop) noexcept = 0;
     virtual bool write() noexcept = 0;
     virtual void enqueue(std::vector<char> buf) noexcept = 0;
     virtual std::optional<std::vector<char>> dequeue() noexcept = 0;

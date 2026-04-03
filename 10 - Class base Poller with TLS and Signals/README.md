@@ -1,4 +1,4 @@
-# 10 Class Base Poller with TLS and Signals
+# 10 Class Base EventLoop with TLS and Signals
 
 This adds signals to the class base implementation.
 

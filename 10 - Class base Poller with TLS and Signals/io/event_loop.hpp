@@ -1,8 +1,10 @@
-#ifndef JETBLACK_IO_POLLER_HPP
-#define JETBLACK_IO_POLLER_HPP
+#ifndef SQUAWKBUS_IO_event_loop_HPP
+#define SQUAWKBUS_IO_event_loop_HPP
 
 #include <poll.h>
+#include <signal.h>
 
+#include <csignal>
 #include <deque>
 #include <format>
 #include <functional>
@@ -17,54 +19,63 @@
 
 namespace jetblack::io
 {
-  inline int poll(std::vector<pollfd> &fds)
+  inline int poll(std::vector<pollfd> &fds, int timeout = -1)
   {
     log.trace("polling");
 
-    int active_fd_count = ::poll(fds.data(), fds.size(), -1);
+    int active_fd_count = ::poll(fds.data(), fds.size(), timeout);
     if (active_fd_count < 0)
     {
+      if (errno == EINTR)
+        return 0; // raising a caught signal causes this behaviour.
       throw std::system_error(errno, std::generic_category(), "poll failed");
     }
     return active_fd_count;
   }
 
-  class Poller
+  struct PollClient
+  {
+    virtual ~PollClient() {}
+    virtual void on_startup(EventLoop& event_loop) = 0;
+    virtual void on_interrupt(EventLoop& event_loop) = 0;
+    virtual void on_open(EventLoop& event_loop, int fd, const std::string& host, std::uint16_t port) = 0;
+    virtual void on_close(EventLoop& event_loop, int fd) = 0;
+    virtual void on_read(EventLoop& event_loop, int fd, std::vector<std::vector<char>>&& bufs) = 0;
+    virtual void on_error(EventLoop& event_loop, int fd, std::exception error) = 0;
+  };
+
+  class EventLoop
   {
   public:
     typedef std::unique_ptr<EventHandler> handler_pointer;
     typedef std::map<int, handler_pointer> handler_map;
-    typedef std::function<void(Poller&, int fd)> connection_callback;
-    typedef std::function<void(Poller&, int fd, std::vector<std::vector<char>>&& bufs)> read_callback;
-    typedef std::function<void(Poller&, int fd, std::exception)> error_callback;
+    typedef std::shared_ptr<PollClient> client_pointer;
 
   private:
     handler_map handlers_;
-    connection_callback on_open_;
-    connection_callback on_close_;
-    read_callback on_read_;
-    error_callback on_error_;
+
+    inline static sig_atomic_t last_signal_ = 0;
 
   public:
-    Poller(
-      connection_callback on_open,
-      connection_callback on_close,
-      read_callback on_read,
-      error_callback on_error)
-      : on_open_(on_open),
-        on_close_(on_close),
-        on_read_(on_read),
-        on_error_(on_error)
+    std::optional<std::function<void()>> on_startup;
+    std::optional<std::function<void()>> on_interrupt;
+    std::optional<std::function<void(int fd, const std::string& host, std::uint16_t port)>> on_open;
+    std::optional<std::function<void(int fd)>> on_close;
+    std::optional<std::function<void(int fd, std::vector<std::vector<char>>&& bufs)>> on_read;
+    std::optional<std::function<void(int fd, std::exception error)>> on_error;
+
+  public:
+    EventLoop()
     {
     }
 
-    void add_handler(handler_pointer handler) noexcept
+    void add_handler(handler_pointer handler, const std::string& host, std::uint16_t port) noexcept
     {
       int fd = handler->fd();
       bool is_listener = handler->is_listener();
       handlers_[fd] = std::move(handler);
-      if (!is_listener)
-        on_open_(*this, fd);
+      if (!is_listener && on_open)
+        (*on_open)(fd, host, port);
     }
 
     void write(int fd, const std::vector<char>& buf) noexcept
@@ -85,13 +96,27 @@ namespace jetblack::io
 
     void event_loop()
     {
-      bool is_ok = true;
+      if (on_startup)
+        (*on_startup)();
 
-      while (is_ok) {
+      while (true) {
 
         std::vector<pollfd> fds = make_poll_fds();
 
-        int active_fd_count = poll(fds);
+        int active_fd_count = poll(fds, 1000);
+
+        if (EventLoop::last_signal_ != 0)
+        {
+          EventLoop::last_signal_ = 0;
+          try
+          {
+            if (on_interrupt)
+              (*on_interrupt)();
+          }
+          catch (...)
+          {
+          }
+        }
 
         for (const auto& poll_state : fds)
         {
@@ -108,6 +133,16 @@ namespace jetblack::io
 
         remove_closed_handlers();
       }
+    }
+
+    static void register_signal(int signum)
+    {
+      struct sigaction action;
+      action.sa_handler = &handle_signal;
+      sigemptyset(&action.sa_mask);
+      action.sa_flags = 0;
+      if (sigaction(signum, &action, nullptr) != 0)
+        throw std::system_error(errno, std::generic_category(), "failed to set signal");
     }
 
   private:
@@ -153,14 +188,16 @@ namespace jetblack::io
 
         if (!bufs.empty())
         {
-          on_read_(*this, handler->fd(), std::move(bufs));
+          if (on_read)
+            (*on_read)(handler->fd(), std::move(bufs));
         }
 
         return can_continue;
       }
       catch(const std::exception& error)
       {
-        on_error_(*this, handler->fd(), error);
+        if (on_error)
+          (*on_error)(handler->fd(), error);
         return false;
       }
     }
@@ -175,7 +212,8 @@ namespace jetblack::io
       }
       catch(const std::exception& error)
       {
-        on_error_(*this, handler->fd(), error);
+        if (on_error)
+          (*on_error)(handler->fd(), error);
         return false;
       }
     }
@@ -229,11 +267,17 @@ namespace jetblack::io
       {
         auto handler = std::move(handlers_[fd]);
         handlers_.erase(fd);
-        if (!handler->is_listener())
-          on_close_(*this, handler->fd());
+        if (!handler->is_listener() && on_close)
+          (*on_close)(fd);
       }
     }
+
+    static void handle_signal(int signum)
+    {
+      EventLoop::last_signal_ = signum;
+    }
+
   };
 }
 
-#endif // JETBLACK_IO_POLLER_HPP
+#endif // SQUAWKBUS_IO_event_loop_HPP

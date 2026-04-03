@@ -1,7 +1,7 @@
 #include <format>
 #include <set>
 
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 #include "io/tcp_listener_poll_handler.hpp"
 #include "io/ssl_ctx.hpp"
 #include "logging/log.hpp"
@@ -74,21 +74,21 @@ int main(int argc, char** argv)
 
     std::set<int> clients;
 
-    auto poller = Poller(
+    auto event_loop = EventLoop(
 
-      [&clients](Poller&, int fd)
+      [&clients](EventLoop&, int fd)
       {
         logging::info(std::format("on_open: {}", fd));
         clients.insert(fd);
       },
 
-      [&clients](Poller&, int fd)
+      [&clients](EventLoop&, int fd)
       {
         logging::info(std::format("on_close: {}", fd));
         clients.erase(fd);
       },
 
-      [&clients](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
+      [&clients](EventLoop& event_loop, int fd, std::vector<std::vector<char>>&& bufs)
       {
         logging::info(std::format("on_read: {}", fd));
 
@@ -100,19 +100,19 @@ int main(int argc, char** argv)
             if (client_fd != fd)
             {
               logging::info(std::format("on_read: sending to {}", client_fd));
-              poller.write(client_fd, buf);
+              event_loop.write(client_fd, buf);
             }
           }
         }
       },
       
-      [](Poller&, int fd, std::exception error)
+      [](EventLoop&, int fd, std::exception error)
       {
         logging::info(std::format("on_error: {}, {}", fd, error.what()));
       }
     );
-    poller.add_handler(std::make_unique<TcpListenerPollHandler>(port, ssl_ctx));
-    poller.event_loop();
+    event_loop.add_handler(std::make_unique<TcpListenerPollHandler>(port, ssl_ctx));
+    event_loop.event_loop();
   }
   catch(const std::exception& error)
   {

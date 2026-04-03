@@ -10,7 +10,7 @@
 #include <variant>
 
 #include "io/file.hpp"
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 #include "io/file_poll_handler.hpp"
 #include "io/tcp_client_socket.hpp"
 #include "io/tcp_socket_poll_handler.hpp"
@@ -55,25 +55,25 @@ public:
   Client(int client_fd) : client_fd_(client_fd) {}
 
 private:
-  void on_startup([[maybe_unused]] Poller& poller) override
+  void on_startup([[maybe_unused]] EventLoop& event_loop) override
   {
   }
 
-  void on_interrupt([[maybe_unused]] Poller& poller) override
+  void on_interrupt([[maybe_unused]] EventLoop& event_loop) override
   {
   }
 
-  void on_open([[maybe_unused]] Poller& poller, int fd, const std::string& host, std::uint16_t port) override
+  void on_open([[maybe_unused]] EventLoop& event_loop, int fd, const std::string& host, std::uint16_t port) override
   {
     logging::info(std::format("on_open: {} ({}:{})", fd, host, port));
   }
 
-  void on_close([[maybe_unused]] Poller& poller, int fd) override
+  void on_close([[maybe_unused]] EventLoop& event_loop, int fd) override
   {
     logging::info(std::format("on_close: {}", fd));
   }
 
-  void on_read(Poller& poller, int fd, std::vector<std::vector<char>>&& bufs) override
+  void on_read(EventLoop& event_loop, int fd, std::vector<std::vector<char>>&& bufs) override
   {
     logging::info(std::format("on_read: {}", fd));
 
@@ -85,21 +85,21 @@ private:
       {
         if (s == "CLOSE\n")
         {
-          poller.close(client_fd_);
+          event_loop.close(client_fd_);
         }
         else
         {
-          poller.write(client_fd_, buf);
+          event_loop.write(client_fd_, buf);
         }
       }
       else if (fd == client_fd_)
       {
-        poller.write(STDOUT_FILENO, buf);
+        event_loop.write(STDOUT_FILENO, buf);
       }
     }
   }
 
-  void on_error([[maybe_unused]] Poller& poller, int fd, std::exception error) override
+  void on_error([[maybe_unused]] EventLoop& event_loop, int fd, std::exception error) override
   {
     logging::info(std::format("on_error: {}, {}", fd, error.what()));
   }
@@ -153,18 +153,18 @@ int main(int argc, char** argv)
     client_socket->connect(host, port);
     client_socket->blocking(false);
 
-    auto poller = Poller();
+    auto event_loop = EventLoop();
 
     if (!ssl_ctx)
     {
-      poller.add_handler(
+      event_loop.add_handler(
         std::make_unique<TcpSocketPollHandler>(client_socket, 8096, 8096),
         host,
         port);
     }
     else
     {
-      poller.add_handler(
+      event_loop.add_handler(
         std::make_unique<TcpSocketPollHandler>(client_socket, *ssl_ctx, host, 8096, 8096),
         host,
         port);
@@ -172,13 +172,13 @@ int main(int argc, char** argv)
 
     auto console_input = std::make_shared<File>(STDIN_FILENO, O_RDONLY);
     console_input->blocking(false);
-    poller.add_handler(std::make_unique<FilePollHandler>(console_input, 1024, 1024), "localhost", 1);
+    event_loop.add_handler(std::make_unique<FilePollHandler>(console_input, 1024, 1024), "localhost", 1);
 
     auto console_output = std::make_shared<File>(STDOUT_FILENO, O_WRONLY);
     console_output->blocking(false);
-    poller.add_handler(std::make_unique<FilePollHandler>(console_output, 1024, 1024), "localhost", 2);
+    event_loop.add_handler(std::make_unique<FilePollHandler>(console_output, 1024, 1024), "localhost", 2);
 
-    poller.on_read = [&poller, &client_socket](int fd, std::vector<std::vector<char>>&& bufs)
+    event_loop.on_read = [&event_loop, &client_socket](int fd, std::vector<std::vector<char>>&& bufs)
     {
       logging::info(std::format("on_read: {}", fd));
 
@@ -190,21 +190,21 @@ int main(int argc, char** argv)
         {
           if (s == "CLOSE\n")
           {
-            poller.close(client_socket->fd());
+            event_loop.close(client_socket->fd());
           }
           else
           {
-            poller.write(client_socket->fd(), buf);
+            event_loop.write(client_socket->fd(), buf);
           }
         }
         else if (fd == client_socket->fd())
         {
-          poller.write(STDOUT_FILENO, buf);
+          event_loop.write(STDOUT_FILENO, buf);
         }
       }
     };
 
-    poller.event_loop();
+    event_loop.event_loop();
   }
   catch(const std::exception& error)
   {

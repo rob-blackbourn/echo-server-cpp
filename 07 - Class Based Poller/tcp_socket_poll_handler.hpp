@@ -16,7 +16,7 @@
 #include "match.hpp"
 
 #include "event_handler.hpp"
-#include "poller.hpp"
+#include "event_loop.hpp"
 
 namespace jetblack::net
 {
@@ -50,7 +50,7 @@ namespace jetblack::net
     bool want_read() const noexcept override { return stream_.socket->is_open(); }
     bool want_write() const noexcept override { return stream_.socket->is_open() && !write_queue_.empty(); }
 
-    bool read([[maybe_unused]] Poller& poller) noexcept override
+    bool read([[maybe_unused]] EventLoop& event_loop) noexcept override
     {
       bool ok = stream_.socket->is_open();
       while (ok) {

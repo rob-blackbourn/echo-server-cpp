@@ -25,14 +25,14 @@ namespace jetblack::net
     return active_fd_count;
   }
 
-  class Poller
+  class EventLoop
   {
   public:
     typedef std::unique_ptr<EventHandler> handler_pointer;
     typedef std::map<int, handler_pointer> handler_map;
-    typedef std::function<void(Poller&, int fd)> connection_callback;
-    typedef std::function<void(Poller&, int fd, std::vector<std::vector<char>> bufs)> read_callback;
-    typedef std::function<void(Poller&, int fd, std::exception)> error_callback;
+    typedef std::function<void(EventLoop&, int fd)> connection_callback;
+    typedef std::function<void(EventLoop&, int fd, std::vector<std::vector<char>> bufs)> read_callback;
+    typedef std::function<void(EventLoop&, int fd, std::exception)> error_callback;
 
   private:
     handler_map handlers_;
@@ -42,7 +42,7 @@ namespace jetblack::net
     error_callback on_error_;
 
   public:
-    Poller(
+    EventLoop(
       connection_callback on_open,
       connection_callback on_close,
       read_callback on_read,

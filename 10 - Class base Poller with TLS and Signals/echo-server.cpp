@@ -2,7 +2,7 @@
 #include <format>
 #include <set>
 
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 #include "io/tcp_listener_poll_handler.hpp"
 #include "io/ssl_ctx.hpp"
 #include "logging/log.hpp"
@@ -79,20 +79,20 @@ int main(int argc, char** argv)
       ssl_ctx = make_ssl_context(certfile_option->value(), keyfile_option->value());
     }
 
-    auto poller = Poller();
+    auto event_loop = EventLoop();
 
-    poller.add_handler(
+    event_loop.add_handler(
       std::make_unique<TcpListenerPollHandler>(port, ssl_ctx),
       "0.0.0.0",
       port);
 
-    poller.on_open = [](int fd, const std::string& host, std::uint16_t port) {
+    event_loop.on_open = [](int fd, const std::string& host, std::uint16_t port) {
       logging::info(std::format("on_open: {}:{} (P{})", host, port, fd));
     };
-    poller.on_close = [](int fd) {
+    event_loop.on_close = [](int fd) {
       logging::info(std::format("on_close: {}", fd));
     };
-    poller.on_read = [&poller](int fd, std::vector<std::vector<char>>&& bufs) {
+    event_loop.on_read = [&event_loop](int fd, std::vector<std::vector<char>>&& bufs) {
       logging::info(std::format("on_read: {}", fd));
 
       for (auto& buf : bufs)
@@ -102,19 +102,19 @@ int main(int argc, char** argv)
         if (s == "KILLME")
         {
           logging::info(std::format("closing {}", fd));
-          poller.close(fd);
+          event_loop.close(fd);
         }
         else
         {
-          poller.write(fd, buf);
+          event_loop.write(fd, buf);
         }
       }
     };
-    poller.on_error = [](int fd, std::exception error) {
+    event_loop.on_error = [](int fd, std::exception error) {
       logging::info(std::format("on_error: {}, {}", fd, error.what()));
     };
 
-    poller.event_loop();
+    event_loop.event_loop();
   }
   catch(const std::exception& error)
   {

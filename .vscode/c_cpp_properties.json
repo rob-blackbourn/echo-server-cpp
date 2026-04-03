@@ -4,7 +4,7 @@
             "name": "MacOS",
             "includePath": [
                 "/opt/homebrew/include",
-                "09 - Class Based Poller with TLS"
+                "09 - Class Based EventLoop with TLS"
             ],
             "cppStandard": "c++23",
             "intelliSenseMode": "macos-clang-x86",

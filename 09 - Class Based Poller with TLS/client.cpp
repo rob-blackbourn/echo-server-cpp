@@ -8,7 +8,7 @@
 #include <variant>
 
 #include "io/file.hpp"
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 #include "io/file_poll_handler.hpp"
 #include "io/tcp_client_socket.hpp"
 #include "io/tcp_socket_poll_handler.hpp"
@@ -92,22 +92,22 @@ int main(int argc, char** argv)
     client_socket->connect(host, port);
     client_socket->blocking(false);
 
-    auto poller = Poller(
+    auto event_loop = EventLoop(
 
       // on open
-      [](Poller&, int fd)
+      [](EventLoop&, int fd)
       {
         logging::info(std::format("on_open: {}", fd));
       },
 
       // on close
-      [](Poller&, int fd)
+      [](EventLoop&, int fd)
       {
         logging::info(std::format("on_close: {}", fd));
       },
 
       // on read
-      [&client_socket](Poller& poller, int fd, std::vector<std::vector<char>>&& bufs)
+      [&client_socket](EventLoop& event_loop, int fd, std::vector<std::vector<char>>&& bufs)
       {
         logging::info(std::format("on_read: {}", fd));
 
@@ -119,22 +119,22 @@ int main(int argc, char** argv)
           {
             if (s == "CLOSE\n")
             {
-              poller.close(client_socket->fd());
+              event_loop.close(client_socket->fd());
             }
             else
             {
-              poller.write(client_socket->fd(), buf);
+              event_loop.write(client_socket->fd(), buf);
             }
           }
           else if (fd == client_socket->fd())
           {
-            poller.write(STDOUT_FILENO, buf);
+            event_loop.write(STDOUT_FILENO, buf);
           }
         }
       },
 
       // on error
-      [](Poller&, int fd, std::exception error)
+      [](EventLoop&, int fd, std::exception error)
       {
         logging::info(std::format("on_error: {}, {}", fd, error.what()));
       }
@@ -143,24 +143,24 @@ int main(int argc, char** argv)
 
     if (!ssl_ctx)
     {
-      poller.add_handler(
+      event_loop.add_handler(
         std::make_unique<TcpSocketPollHandler>(client_socket, 8096, 8096));
     }
     else
     {
-      poller.add_handler(
+      event_loop.add_handler(
         std::make_unique<TcpSocketPollHandler>(client_socket, *ssl_ctx, host, 8096, 8096));
     }
 
     auto console_input = std::make_shared<File>(STDIN_FILENO, O_RDONLY);
     console_input->blocking(false);
-    poller.add_handler(std::make_unique<FilePollHandler>(console_input, 1024, 1024));
+    event_loop.add_handler(std::make_unique<FilePollHandler>(console_input, 1024, 1024));
 
     auto console_output = std::make_shared<File>(STDOUT_FILENO, O_WRONLY);
     console_output->blocking(false);
-    poller.add_handler(std::make_unique<FilePollHandler>(console_output, 1024, 1024));
+    event_loop.add_handler(std::make_unique<FilePollHandler>(console_output, 1024, 1024));
 
-    poller.event_loop();
+    event_loop.event_loop();
   }
   catch(const std::exception& error)
   {

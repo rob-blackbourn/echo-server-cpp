@@ -2,7 +2,7 @@
 #include <set>
 
 #include "tcp.hpp"
-#include "poller.hpp"
+#include "event_loop.hpp"
 #include "tcp_listener_poll_handler.hpp"
 #include "utils.hpp"
 
@@ -16,32 +16,32 @@ int main()
   {
     std::cout << std::format("starting echo server on port {}.\n", port);
 
-    auto poller = Poller(
-      [](Poller&, int fd)
+    auto event_loop = EventLoop(
+      [](EventLoop&, int fd)
       {
         std::cout << std::format("on_open: {}\n", fd);
       },
-      [](Poller&, int fd)
+      [](EventLoop&, int fd)
       {
         std::cout << std::format("on_close: {}\n", fd);
       },
-      [](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
+      [](EventLoop& event_loop, int fd, std::vector<std::vector<char>> bufs)
       {
         std::cout << std::format("on_read: {}\n", fd);
 
         for (auto& buf : bufs)
         {
           std::cout << std::format("on_read: received {}\n", to_string(buf));
-          poller.write(fd, buf);
+          event_loop.write(fd, buf);
         }
       },
-      [](Poller&, int fd, std::exception error)
+      [](EventLoop&, int fd, std::exception error)
       {
         std::cout << std::format("on_error: {}, {}\n", fd, error.what());
       }
     );
-    poller.add_handler(std::make_unique<TcpListenerPollHandler>(port));
-    poller.event_loop();
+    event_loop.add_handler(std::make_unique<TcpListenerPollHandler>(port));
+    event_loop.event_loop();
   }
   catch(const std::exception& error)
   {

@@ -13,7 +13,7 @@
 #include "utils/match.hpp"
 
 #include "io/event_handler.hpp"
-#include "io/poller.hpp"
+#include "io/event_loop.hpp"
 
 #include "io/tcp_listener_socket.hpp"
 #include "io/tcp_socket_poll_handler.hpp"
@@ -50,7 +50,7 @@ namespace jetblack::io
     bool want_read() const noexcept override { return true; }
     bool want_write() const noexcept override { return false; }
 
-    bool read(Poller& poller) override
+    bool read(EventLoop& event_loop) override
     {
       auto client = listener_.accept();
       client->blocking(false);
@@ -60,13 +60,13 @@ namespace jetblack::io
 
       if (!ssl_ctx_)
       {
-        poller.add_handler(
+        event_loop.add_handler(
           std::make_unique<TcpSocketPollHandler>(std::move(client), 8096, 8096),
           host, port);
       }
       else
       {
-        poller.add_handler(
+        event_loop.add_handler(
           std::make_unique<TcpSocketPollHandler>(std::move(client), *ssl_ctx_, 8096, 8096),
           host, port);
       }
