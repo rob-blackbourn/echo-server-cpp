@@ -23,7 +23,7 @@ namespace jetblack::io
 {
   using jetblack::utils::match;
 
-  class TcpSocketPollHandler : public EventHandler
+  class TcpSocketEventHandler : public EventHandler
   {
   private:
     TcpStream stream_;
@@ -34,7 +34,7 @@ namespace jetblack::io
     const std::size_t read_bufsiz;
     const std::size_t write_bufsiz;
 
-    TcpSocketPollHandler(
+    TcpSocketEventHandler(
       std::shared_ptr<TcpSocket> socket,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
@@ -43,7 +43,7 @@ namespace jetblack::io
         write_bufsiz(write_bufsiz)
     {
     }
-    TcpSocketPollHandler(
+    TcpSocketEventHandler(
       std::shared_ptr<TcpSocket> socket,
       std::shared_ptr<SslContext> ssl_ctx,
       std::size_t read_bufsiz,
@@ -53,7 +53,7 @@ namespace jetblack::io
         write_bufsiz(write_bufsiz)
     {
     }
-    TcpSocketPollHandler(
+    TcpSocketEventHandler(
       std::shared_ptr<TcpSocket> socket,
       std::shared_ptr<SslContext> ssl_ctx,
       const std::string& server_name,
@@ -64,7 +64,7 @@ namespace jetblack::io
         write_bufsiz(write_bufsiz)
     {
     }
-    ~TcpSocketPollHandler() override
+    ~TcpSocketEventHandler() override
     {
     }
 

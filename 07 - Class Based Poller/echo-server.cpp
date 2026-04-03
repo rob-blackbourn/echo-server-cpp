@@ -3,7 +3,7 @@
 
 #include "tcp.hpp"
 #include "event_loop.hpp"
-#include "tcp_listener_poll_handler.hpp"
+#include "tcp_listener_event_handler.hpp"
 #include "utils.hpp"
 
 using namespace jetblack::net;
@@ -40,7 +40,7 @@ int main()
         std::cout << std::format("on_error: {}, {}\n", fd, error.what());
       }
     );
-    event_loop.add_handler(std::make_unique<TcpListenerPollHandler>(port));
+    event_loop.add_handler(std::make_unique<TcpListenerEventHandler>(port));
     event_loop.event_loop();
   }
   catch(const std::exception& error)

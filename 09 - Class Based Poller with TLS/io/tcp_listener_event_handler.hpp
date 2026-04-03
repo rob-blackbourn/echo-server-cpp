@@ -18,18 +18,18 @@
 #include "io/tcp_socket.hpp"
 #include "io/tcp_listener_socket.hpp"
 #include "io/tcp_stream.hpp"
-#include "io/tcp_socket_poll_handler.hpp"
+#include "io/tcp_socket_event_handler.hpp"
 
 namespace jetblack::io
 {
-  class TcpListenerPollHandler : public EventHandler
+  class TcpListenerEventHandler : public EventHandler
   {
   private:
     std::optional<std::shared_ptr<SslContext>> ssl_ctx_;
     TcpListenerSocket listener_;
 
   public:
-    TcpListenerPollHandler(
+    TcpListenerEventHandler(
       uint16_t port,
       std::optional<std::shared_ptr<SslContext>> ssl_ctx = std::nullopt,
       int backlog = 10)
@@ -40,7 +40,7 @@ namespace jetblack::io
       listener_.reuseaddr(true);
       listener_.listen(backlog);
     }
-    ~TcpListenerPollHandler() override
+    ~TcpListenerEventHandler() override
     {
     }
 
@@ -60,12 +60,12 @@ namespace jetblack::io
       if (!ssl_ctx_)
       {
         event_loop.add_handler(
-          std::make_unique<TcpSocketPollHandler>(std::move(client), 8096, 8096));
+          std::make_unique<TcpSocketEventHandler>(std::move(client), 8096, 8096));
       }
       else
       {
         event_loop.add_handler(
-          std::make_unique<TcpSocketPollHandler>(std::move(client), *ssl_ctx_, 8096, 8096));
+          std::make_unique<TcpSocketEventHandler>(std::move(client), *ssl_ctx_, 8096, 8096));
       }
 
       return true;

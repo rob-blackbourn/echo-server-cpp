@@ -4,7 +4,7 @@
 #include <set>
 
 #include "io/event_loop.hpp"
-#include "io/tcp_listener_poll_handler.hpp"
+#include "io/tcp_listener_event_handler.hpp"
 #include "io/ssl_ctx.hpp"
 #include "logging/log.hpp"
 #include "utils/utils.hpp"
@@ -78,7 +78,7 @@ int main(int argc, char** argv)
     auto event_loop = EventLoop();
 
     event_loop.add_handler(
-      std::make_unique<TcpListenerPollHandler>(port, ssl_ctx),
+      std::make_unique<TcpListenerEventHandler>(port, ssl_ctx),
       "0.0.0.0",
       port);
 

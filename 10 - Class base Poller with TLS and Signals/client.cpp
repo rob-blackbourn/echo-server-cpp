@@ -11,9 +11,9 @@
 
 #include "io/file.hpp"
 #include "io/event_loop.hpp"
-#include "io/file_poll_handler.hpp"
+#include "io/file_event_handler.hpp"
 #include "io/tcp_client_socket.hpp"
-#include "io/tcp_socket_poll_handler.hpp"
+#include "io/tcp_socket_event_handler.hpp"
 #include "io/tcp_stream.hpp"
 #include "io/ssl_ctx.hpp"
 #include "logging/log.hpp"
@@ -158,25 +158,25 @@ int main(int argc, char** argv)
     if (!ssl_ctx)
     {
       event_loop.add_handler(
-        std::make_unique<TcpSocketPollHandler>(client_socket, 8096, 8096),
+        std::make_unique<TcpSocketEventHandler>(client_socket, 8096, 8096),
         host,
         port);
     }
     else
     {
       event_loop.add_handler(
-        std::make_unique<TcpSocketPollHandler>(client_socket, *ssl_ctx, host, 8096, 8096),
+        std::make_unique<TcpSocketEventHandler>(client_socket, *ssl_ctx, host, 8096, 8096),
         host,
         port);
     }
 
     auto console_input = std::make_shared<File>(STDIN_FILENO, O_RDONLY);
     console_input->blocking(false);
-    event_loop.add_handler(std::make_unique<FilePollHandler>(console_input, 1024, 1024), "localhost", 1);
+    event_loop.add_handler(std::make_unique<FileEventHandler>(console_input, 1024, 1024), "localhost", 1);
 
     auto console_output = std::make_shared<File>(STDOUT_FILENO, O_WRONLY);
     console_output->blocking(false);
-    event_loop.add_handler(std::make_unique<FilePollHandler>(console_output, 1024, 1024), "localhost", 2);
+    event_loop.add_handler(std::make_unique<FileEventHandler>(console_output, 1024, 1024), "localhost", 2);
 
     event_loop.on_read = [&event_loop, &client_socket](int fd, std::vector<std::vector<char>>&& bufs)
     {

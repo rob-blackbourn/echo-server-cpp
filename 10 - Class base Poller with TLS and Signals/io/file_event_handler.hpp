@@ -1,5 +1,5 @@
-#ifndef JETBLACK_IO_FILE_POLL_HANDLER_HPP
-#define JETBLACK_IO_FILE_POLL_HANDLER_HPP
+#ifndef SQUAWKBUS_IO_FILE_POLL_HANDLER_HPP
+#define SQUAWKBUS_IO_FILE_POLL_HANDLER_HPP
 
 #include <poll.h>
 
@@ -22,7 +22,7 @@ namespace jetblack::io
 {
   using jetblack::utils::match;
 
-  class FilePollHandler : public EventHandler
+  class FileEventHandler : public EventHandler
   {
   private:
     FileStream stream_;
@@ -34,7 +34,7 @@ namespace jetblack::io
     const std::size_t write_bufsiz;
 
   public:
-    FilePollHandler(
+    FileEventHandler(
       std::shared_ptr<File> file,
       std::size_t read_bufsiz,
       std::size_t write_bufsiz)
@@ -43,7 +43,7 @@ namespace jetblack::io
         write_bufsiz(write_bufsiz)
     {
     }
-    ~FilePollHandler() override
+    ~FileEventHandler() override
     {
     }
 
@@ -86,7 +86,6 @@ namespace jetblack::io
         stream_.file->is_open(false);
         throw;
       }
-      
 
       return stream_.file->is_open();
     }
@@ -168,4 +167,4 @@ namespace jetblack::io
   };
 }
 
-#endif // JETBLACK_IO_FILE_POLL_HANDLER_HPP
+#endif // SQUAWKBUS_IO_FILE_POLL_HANDLER_HPP

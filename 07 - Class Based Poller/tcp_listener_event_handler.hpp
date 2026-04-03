@@ -18,24 +18,24 @@
 
 #include "event_handler.hpp"
 #include "event_loop.hpp"
-#include "tcp_socket_poll_handler.hpp"
+#include "tcp_socket_event_handler.hpp"
 
 namespace jetblack::net
 {
-  class TcpListenerPollHandler : public EventHandler
+  class TcpListenerEventHandler : public EventHandler
   {
   private:
     TcpListenerSocket listener_;
 
   public:
-    TcpListenerPollHandler(uint16_t port, int backlog = 10)
+    TcpListenerEventHandler(uint16_t port, int backlog = 10)
     {
       listener_.bind(port);
       listener_.blocking(false);
       listener_.reuseaddr(true);
       listener_.listen(backlog);
     }
-    ~TcpListenerPollHandler() override
+    ~TcpListenerEventHandler() override
     {
     }
 
@@ -54,7 +54,7 @@ namespace jetblack::net
       auto client = listener_.accept();
       client->blocking(false);
 
-      event_loop.add_handler(std::make_unique<TcpSocketPollHandler>(std::move(client), 8096, 8096));
+      event_loop.add_handler(std::make_unique<TcpSocketEventHandler>(std::move(client), 8096, 8096));
 
       return true;
     }
