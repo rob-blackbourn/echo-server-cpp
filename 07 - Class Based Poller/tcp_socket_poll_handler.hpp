@@ -20,7 +20,7 @@
 
 namespace jetblack::net
 {
-  class TcpSocketPollHandler : public PollHandler
+  class TcpSocketPollHandler : public EventHandler
   {
   private:
     TcpStream stream_;

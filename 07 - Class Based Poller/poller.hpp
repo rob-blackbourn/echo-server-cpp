@@ -28,7 +28,7 @@ namespace jetblack::net
   class Poller
   {
   public:
-    typedef std::unique_ptr<PollHandler> handler_pointer;
+    typedef std::unique_ptr<EventHandler> handler_pointer;
     typedef std::map<int, handler_pointer> handler_map;
     typedef std::function<void(Poller&, int fd)> connection_callback;
     typedef std::function<void(Poller&, int fd, std::vector<std::vector<char>> bufs)> read_callback;
@@ -123,7 +123,7 @@ namespace jetblack::net
       }
     }
 
-    bool handle_read(PollHandler* handler) noexcept
+    bool handle_read(EventHandler* handler) noexcept
     {
       try
       {
@@ -148,7 +148,7 @@ namespace jetblack::net
       }
     }
 
-    bool handle_write(PollHandler* handler) noexcept
+    bool handle_write(EventHandler* handler) noexcept
     {
       try
       {

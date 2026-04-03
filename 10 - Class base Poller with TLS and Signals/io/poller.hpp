@@ -47,7 +47,7 @@ namespace jetblack::io
   class Poller
   {
   public:
-    typedef std::unique_ptr<PollHandler> handler_pointer;
+    typedef std::unique_ptr<EventHandler> handler_pointer;
     typedef std::map<int, handler_pointer> handler_map;
     typedef std::shared_ptr<PollClient> client_pointer;
 
@@ -170,7 +170,7 @@ namespace jetblack::io
       }
     }
 
-    bool handle_read(PollHandler* handler) noexcept
+    bool handle_read(EventHandler* handler) noexcept
     {
       log.trace(std::format("handling read for {}", handler->fd()));
 
@@ -202,7 +202,7 @@ namespace jetblack::io
       }
     }
 
-    bool handle_write(PollHandler* handler) noexcept
+    bool handle_write(EventHandler* handler) noexcept
     {
       log.trace(std::format("handling write for {}", handler->fd()));
 

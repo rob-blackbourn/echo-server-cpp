@@ -20,7 +20,7 @@
 
 namespace jetblack::io
 {
-  class TcpListenerPollHandler : public PollHandler
+  class TcpListenerPollHandler : public EventHandler
   {
   private:
     std::optional<std::shared_ptr<SslContext>> ssl_ctx_;

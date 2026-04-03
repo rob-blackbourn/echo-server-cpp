@@ -23,7 +23,7 @@ namespace jetblack::io
 {
   using jetblack::utils::match;
 
-  class TcpSocketPollHandler : public PollHandler
+  class TcpSocketPollHandler : public EventHandler
   {
   private:
     TcpStream stream_;

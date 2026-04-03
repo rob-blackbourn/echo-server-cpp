@@ -22,7 +22,7 @@ namespace jetblack::io
 {
   using jetblack::utils::match;
 
-  class FilePollHandler : public PollHandler
+  class FilePollHandler : public EventHandler
   {
   private:
     FileStream stream_;

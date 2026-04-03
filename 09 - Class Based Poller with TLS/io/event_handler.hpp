@@ -8,10 +8,10 @@ namespace jetblack::io
 {
   class Poller;
 
-  class PollHandler
+  class EventHandler
   {
   public:
-    virtual ~PollHandler() {};
+    virtual ~EventHandler() {};
     virtual bool is_listener() const noexcept = 0;
     virtual int fd() const noexcept = 0;
     virtual bool is_open() const noexcept = 0;

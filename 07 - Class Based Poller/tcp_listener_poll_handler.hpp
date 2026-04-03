@@ -22,7 +22,7 @@
 
 namespace jetblack::net
 {
-  class TcpListenerPollHandler : public PollHandler
+  class TcpListenerPollHandler : public EventHandler
   {
   private:
     TcpListenerSocket listener_;
