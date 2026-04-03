@@ -17,7 +17,7 @@ int main()
 
     std::set<int> clients;
 
-    auto poller = EventLoop(
+    auto event_loop = EventLoop(
       [&clients](EventLoop&, int fd)
       {
         std::cout << std::format("on_open: {}\n", fd);
@@ -28,7 +28,7 @@ int main()
         std::cout << std::format("on_close: {}\n", fd);
         clients.erase(fd);
       },
-      [&clients](EventLoop& poller, int fd, std::vector<std::vector<char>> bufs)
+      [&clients](EventLoop& event_loop, int fd, std::vector<std::vector<char>> bufs)
       {
         std::cout << std::format("on_read: {}\n", fd);
 
@@ -40,7 +40,7 @@ int main()
             if (client_fd != fd)
             {
               std::cout << std::format("on_read: sending to {}\n", client_fd);
-              poller.write(client_fd, buf);
+              event_loop.write(client_fd, buf);
             }
           }
         }
@@ -50,8 +50,8 @@ int main()
         std::cout << std::format("on_error: {}, {}\n", fd, error.what());
       }
     );
-    poller.add_handler(std::make_unique<TcpListenerPollHandler>(port));
-    poller.event_loop();
+    event_loop.add_handler(std::make_unique<TcpListenerPollHandler>(port));
+    event_loop.event_loop();
   }
   catch(const std::exception& error)
   {
