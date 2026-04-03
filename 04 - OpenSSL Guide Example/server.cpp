@@ -136,7 +136,7 @@ int main()
             {
                 /* Get message from client; will fail if client closes connection */
                 char rxbuf[128];
-                int rxlen = rxlen = SSL_read(ssl, rxbuf, sizeof(rxbuf));
+                int rxlen = SSL_read(ssl, rxbuf, sizeof(rxbuf));
                 if (rxlen <= 0)
                 {
                     if (rxlen == 0)
