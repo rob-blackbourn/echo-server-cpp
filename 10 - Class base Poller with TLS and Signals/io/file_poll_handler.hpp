@@ -13,7 +13,7 @@
 
 #include "utils/match.hpp"
 
-#include "io/poll_handler.hpp"
+#include "io/event_handler.hpp"
 #include "io/poller.hpp"
 #include "io/file.hpp"
 #include "io/file_stream.hpp"

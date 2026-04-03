@@ -13,7 +13,7 @@
 #include <vector>
 
 #include "io/logger.hpp"
-#include "io/poll_handler.hpp"
+#include "io/event_handler.hpp"
 
 namespace jetblack::io
 {

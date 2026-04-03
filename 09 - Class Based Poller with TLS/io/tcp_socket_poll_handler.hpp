@@ -16,7 +16,7 @@
 #include "io/tcp_listener_socket.hpp"
 #include "io/tcp_stream.hpp"
 #include "io/ssl_ctx.hpp"
-#include "io/poll_handler.hpp"
+#include "io/event_handler.hpp"
 #include "io/poller.hpp"
 
 namespace jetblack::io

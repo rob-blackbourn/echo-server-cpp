@@ -3,7 +3,8 @@
         {
             "name": "MacOS",
             "includePath": [
-                "/opt/homebrew/include"
+                "/opt/homebrew/include",
+                "09 - Class Based Poller with TLS"
             ],
             "cppStandard": "c++23",
             "intelliSenseMode": "macos-clang-x86",

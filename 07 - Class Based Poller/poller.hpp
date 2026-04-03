@@ -10,7 +10,7 @@
 #include <system_error>
 #include <utility>
 
-#include "poll_handler.hpp"
+#include "event_handler.hpp"
 
 namespace jetblack::net
 {
