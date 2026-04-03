@@ -86,7 +86,7 @@ int main(int argc, char** argv)
 
     poller.on_open = [&clients](int fd, const std::string& host, std::uint16_t port)
     {
-      logging::info(std::format("Add client {}", fd));
+      logging::info(std::format("Add client {} ({}:{})", fd, host, port));
       clients.insert(fd);
     };
     poller.on_close = [&clients](int fd)

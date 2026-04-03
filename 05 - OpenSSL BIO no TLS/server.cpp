@@ -13,7 +13,7 @@
 #include <cerrno>
 #include <cstring>
 
-int main(int argc, char** argv)
+int main()
 {
     const uint16_t port = 22000;
 
@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         memset(buf, 0, sizeof(buf));
 
         size_t nbytes_read;
-        int read_retcode = BIO_read_ex(bio, buf, sizeof(buf), &nbytes_read);
+        [[maybe_unused]] int read_retcode = BIO_read_ex(bio, buf, sizeof(buf), &nbytes_read);
         std::cout << "Received " << (int)nbytes_read << " bytes of \"" << buf << "\"" << std::endl;
         if (nbytes_read <= 0)
         {
@@ -82,7 +82,7 @@ int main(int argc, char** argv)
         std::cout << "Echoing back - " << buf << std::endl;
         std::cout << "Writing " << strlen(buf) + 1 << std::endl;
         size_t nbytes_written;
-        int write_retcode = BIO_write_ex(bio, buf, strlen(buf) + 1, &nbytes_written);
+        [[maybe_unused]] int write_retcode = BIO_write_ex(bio, buf, strlen(buf) + 1, &nbytes_written);
         std::cout << "Wrote " << (int)nbytes_written <<" bytes" << std::endl;
     }
 

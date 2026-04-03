@@ -2,80 +2,39 @@
 #define __client_state_hpp
 
 #include <fcntl.h>
-#include <netdb.h>
-#include <poll.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <unistd.h>
 
 #include <algorithm>
-#include <iostream>
 #include <cerrno>
+#include <cstdio>
 #include <cstring>
-#include <map>
-#include <vector>
 #include <deque>
+#include <exception>
+#include <iostream>
+#include <map>
 #include <optional>
 #include <utility>
+#include <vector>
 
+#include "io.hpp"
+
+// Wraps a socket.
+// Provides access to the file descriptor, and
+// a method to enable or disable blocking..
 class tcp_socket
 {
 private:
-    int _fd;
+    int fd_;
 
 public:
     tcp_socket() {}
-    tcp_socket(int fd) : _fd(fd) {}
-    tcp_socket(const tcp_socket& other) : _fd(other._fd) {}
+    tcp_socket(int fd) : fd_(fd) {}
 
-    int fd() const { return _fd; }
+    int fd() const { return fd_; }
 
-    bool set_blocking(bool is_blocking)
+    std::expected<void*, int> set_blocking(bool is_blocking)
     {
-        int flags = fcntl(_fd, F_GETFL, 0);
-        if (flags == -1) return false;
-        flags = is_blocking ? (flags & ~O_NONBLOCK) : (flags | O_NONBLOCK);
-        return (fcntl(_fd, F_SETFL, flags) == 0);        
-    }
-};
-
-class tcp_client : public tcp_socket
-{
-private:
-    bool _is_open = true;
-    
-public:
-    std::optional<std::vector<char>> read(std::vector<char>& buf)
-    {
-        ssize_t bytes_read = ::read(fd(), buf.data(), buf.size());
-
-        // Check for an error.
-        if (bytes_read == -1)
-        {
-            // Check if it's flow control.
-            if (!(errno == EAGAIN || errno == EWOULDBLOCK))
-            {
-                // Not a flow control error; the socket has faulted.
-                _is_open = false;
-            }
-
-            // Any error terminates the read session.
-            return std::nullopt;
-        }
-        else if (bytes_read == 0)
-        {
-            // A read of zero bytes indicates socket has closed.
-            _is_open = false;
-            return std::nullopt;
-        }
-        else
-        {
-            // Data has been read successfully. Size the data to the amount read and add the data to the read queue.
-            buf.resize(bytes_read);
-            return buf;
-        }
+        return jetblack::fcntl::set_flag<O_NONBLOCK>(fd_, is_blocking);
     }
 };
 
@@ -85,120 +44,121 @@ const std::size_t NETWORK_WRITE_BUFSIZE = 8096;
 class ClientState : public tcp_socket
 {
 private:
-    std::size_t _read_bufsiz;
-    std::deque<std::vector<char>> _read_queue;
+    std::size_t read_bufsiz_;
+    std::deque<std::vector<char>> read_queue_;
 
-    std::size_t _write_bufsiz;
-    std::deque<std::pair<std::vector<char>,std::size_t>> _write_queue;
+    std::size_t write_bufsiz_;
+    std::deque<std::pair<std::vector<char>,std::size_t>> write_queue_;
 
-    bool _is_open = true;
+    bool is_open_ = true;
 
 public:
     ClientState() {}
 
     ClientState(
-        int _fd,
+        int fd_,
         std::size_t read_bufsiz = NETWORK_READ_BUFSIZE,
         std::size_t write_bufsiz = NETWORK_WRITE_BUFSIZE)
-        :   tcp_socket { _fd },
-            _read_bufsiz { read_bufsiz },
-            _write_bufsiz { write_bufsiz }
+        :   tcp_socket { fd_ },
+            read_bufsiz_ { read_bufsiz },
+            write_bufsiz_ { write_bufsiz }
     {
     }
 
-    bool can_write() const { return _is_open && !_write_queue.empty(); }
+    bool can_write() const { return is_open_ && !write_queue_.empty(); }
 
     std::optional<std::vector<char>> read()
     {
-        if (_read_queue.empty())
+        if (read_queue_.empty())
             return std::nullopt;
 
-        auto buf = _read_queue.front();
-        _read_queue.pop_front();
+        auto buf = read_queue_.front();
+        read_queue_.pop_front();
         return buf;
     }
 
     bool enqueue_reads()
     {
-        while (_is_open)
+        while (is_open_)
         {
-            auto buf = std::vector<char>(_read_bufsiz);
-            ssize_t bytes_read = ::read(fd(), buf.data(), buf.size());
+            auto buf = std::vector<char>(read_bufsiz_);
+            auto bytes_read = jetblack::read(fd(), buf.data(), buf.size());
 
             // Check for an error.
-            if (bytes_read == -1)
+            if (!bytes_read)
             {
                 // Check if it's flow control.
-                if (!(errno == EAGAIN || errno == EWOULDBLOCK))
+                if (!(bytes_read.error() == EAGAIN || bytes_read.error() == EWOULDBLOCK))
                 {
                     // Not a flow control error; the socket has faulted.
-                    _is_open = false;
+                    is_open_ = false;
                 }
 
-                // Any error terminates the read session.
+                // Any error ends the read session.
                 break;
             }
-            else if (bytes_read == 0)
+            else if (*bytes_read == 0)
             {
                 // A read of zero bytes indicates socket has closed.
-                _is_open = false;
+                is_open_ = false;
             }
             else
             {
-                // Data has been read successfully. Size the data to the amount read and add the data to the read queue.
-                buf.resize(bytes_read);
-                _read_queue.push_back(std::move(buf));
+                // Data has been read successfully.
+                // Size the data to the amount read and add the data to the read queue.
+                buf.resize(*bytes_read);
+                read_queue_.push_back(std::move(buf));
             }
         }
 
-        return _is_open;
+        return is_open_;
     }
 
     void enqueue_write(std::vector<char> buf)
     {
-        _write_queue.push_back(std::move(std::make_pair(std::move(buf), 0)));
+        write_queue_.push_back(std::make_pair(std::move(buf), 0));
     }
 
     bool write()
     {
-        while (_is_open && !_write_queue.empty())
+        while (is_open_ && !write_queue_.empty())
         {
-            const auto& buf = _write_queue.front().first;
-            auto& offset = _write_queue.front().second;
-            ssize_t bytes_written = ::write(fd(), buf.data(), std::min(buf.size() - offset, _write_bufsiz));
+            const auto& buf = write_queue_.front().first;
+            auto& offset = write_queue_.front().second;
+            auto bytes_written = jetblack::write(fd(), buf.data(), std::min(buf.size() - offset, write_bufsiz_));
 
             // Check for errors.
-            if (bytes_written == -1)
+            if (!bytes_written)
             {
                 // Check if it's flow control.
-                if (!(errno == EAGAIN || errno == EWOULDBLOCK))
+                if (!(bytes_written.error() == EAGAIN || bytes_written.error() == EWOULDBLOCK))
                 {
                     // Not flow control; the socket has faulted.
-                    _is_open = false;
+                    is_open_ = false;
                 }
 
                 // Any error terminates the write session.
                 break;
             }
 
-            if (bytes_written == 0)
+            if (*bytes_written == 0)
             {
                 // A write of zero bytes indicates socket has closed.
-                _is_open = false;
+                is_open_ = false;
             }
             else
             {
                 // Some bytes were written. Manage the write queue.
-                offset += bytes_written;
+                offset += *bytes_written;
                 if (offset == buf.size())
                 {
                     // The buffer has been completely used. Remove it from the queue.
-                    _write_queue.pop_front();
+                    write_queue_.pop_front();
                 }
             }
         }
 
-        return _is_open;
+        return is_open_;
     }
 };
 

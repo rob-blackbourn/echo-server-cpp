@@ -15,6 +15,14 @@
 
 int main(int argc, char** argv)
 {
+    if (argc != 3)
+    {
+        std::cerr << "usage: " << argv[0] << " <certfile> <keyfile>\n";
+        return 1;
+    }
+    const char* certfile = argv[1];
+    const char* keyfile = argv[2];
+
     const uint16_t port = 22000;
 
     int listen_fd = socket(AF_INET, SOCK_STREAM, 0);
@@ -59,14 +67,14 @@ int main(int argc, char** argv)
         exit(EXIT_FAILURE);
     }
 
-    if (SSL_CTX_use_certificate_file(ssl_ctx, "/home/rtb/.keys/server.crt", SSL_FILETYPE_PEM) <= 0)
+    if (SSL_CTX_use_certificate_file(ssl_ctx, certfile, SSL_FILETYPE_PEM) <= 0)
     {
         perror("Error loading server certificate");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
   
-    if (SSL_CTX_use_PrivateKey_file(ssl_ctx, "/home/rtb/.keys/server.key", SSL_FILETYPE_PEM) <= 0)
+    if (SSL_CTX_use_PrivateKey_file(ssl_ctx, keyfile, SSL_FILETYPE_PEM) <= 0)
     {
         perror("Error loading server private key");
         ERR_print_errors_fp(stderr);

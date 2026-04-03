@@ -82,7 +82,7 @@ namespace jetblack::io
     }
 
     std::optional<std::vector<char>> dequeue() noexcept override { return std::nullopt; }
-    void enqueue(const std::vector<char>& buf) noexcept override {}
+    void enqueue([[maybe_unused]] const std::vector<char>& buf) noexcept override {}
   };
 
 }

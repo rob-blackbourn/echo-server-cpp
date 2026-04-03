@@ -1,5 +1,5 @@
-#ifndef JETBLACK_LOGGING_LOG_HPP
-#define JETBLACK_LOGGING_LOG_HPP
+#ifndef SQUAWKBUS_LOGGING_LOG_HPP
+#define SQUAWKBUS_LOGGING_LOG_HPP
 
 #include <chrono>
 #include <cstdio>
@@ -12,7 +12,7 @@
 #include <string>
 #include <utility>
 
-namespace jetblack::logging {
+namespace squawkbus::logging {
 
   enum class Level
   {
@@ -412,4 +412,4 @@ namespace jetblack::logging {
   }
 }
 
-#endif // JETBLACK_LOGGING_LOG_HPP
+#endif // SQUAWKBUS_LOGGING_LOG_HPP

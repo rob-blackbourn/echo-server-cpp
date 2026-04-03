@@ -62,7 +62,7 @@ namespace jetblack::net
     bool write() noexcept override { return false; }
 
     std::optional<std::vector<char>> dequeue() noexcept override { return std::nullopt; }
-    void enqueue(std::vector<char> buf) noexcept override {}
+    void enqueue([[maybe_unused]] std::vector<char> buf) noexcept override {}
   };
 
 }

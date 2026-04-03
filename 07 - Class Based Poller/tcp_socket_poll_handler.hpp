@@ -50,7 +50,7 @@ namespace jetblack::net
     bool want_read() const noexcept override { return stream_.socket->is_open(); }
     bool want_write() const noexcept override { return stream_.socket->is_open() && !write_queue_.empty(); }
 
-    bool read(Poller& poller) noexcept override
+    bool read([[maybe_unused]] Poller& poller) noexcept override
     {
       bool ok = stream_.socket->is_open();
       while (ok) {

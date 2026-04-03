@@ -25,11 +25,6 @@
 using namespace jetblack::io;
 namespace logging = jetblack::logging;
 
-namespace
-{
-  volatile std::sig_atomic_t last_signal = 0;
-}
-
 std::shared_ptr<SslContext> make_ssl_context(std::optional<std::string> capath)
 {
   print_line("making ssl client context");
@@ -60,20 +55,20 @@ public:
   Client(int client_fd) : client_fd_(client_fd) {}
 
 private:
-  void on_startup(Poller& poller) override
+  void on_startup([[maybe_unused]] Poller& poller) override
   {
   }
 
-  void on_interrupt(Poller& poller) override
+  void on_interrupt([[maybe_unused]] Poller& poller) override
   {
   }
 
-  void on_open(Poller& poller, int fd, const std::string& host, std::uint16_t port) override
+  void on_open([[maybe_unused]] Poller& poller, int fd, const std::string& host, std::uint16_t port) override
   {
-    logging::info(std::format("on_open: {}", fd));
+    logging::info(std::format("on_open: {} ({}:{})", fd, host, port));
   }
 
-  void on_close(Poller& poller, int fd) override
+  void on_close([[maybe_unused]] Poller& poller, int fd) override
   {
     logging::info(std::format("on_close: {}", fd));
   }
@@ -104,7 +99,7 @@ private:
     }
   }
 
-  void on_error(Poller& poller, int fd, std::exception error) override
+  void on_error([[maybe_unused]] Poller& poller, int fd, std::exception error) override
   {
     logging::info(std::format("on_error: {}, {}", fd, error.what()));
   }
@@ -209,7 +204,7 @@ int main(int argc, char** argv)
       }
     };
 
-    poller.event_loop(last_signal);
+    poller.event_loop();
   }
   catch(const std::exception& error)
   {

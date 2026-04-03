@@ -53,7 +53,7 @@ namespace jetblack::io
     bool want_read() const noexcept override { return stream_.file->can_read(); }
     bool want_write() const noexcept override { return stream_.file->can_write() && !write_queue_.empty(); }
 
-    bool read(Poller& poller) override
+    bool read([[maybe_unused]] Poller& poller) override
     {
       try
       {

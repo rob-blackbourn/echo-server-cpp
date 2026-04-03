@@ -1,53 +1,47 @@
-#include <fcntl.h>
-#include <netdb.h>
 #include <poll.h>
-#include <stdio.h>
-#include <string.h>
-#include <sys/types.h>
 #include <sys/socket.h>
-#include <unistd.h>
+#include <arpa/inet.h>
 
 #include <algorithm>
-#include <iostream>
 #include <cerrno>
+#include <cstdio>
 #include <cstring>
-#include <map>
-#include <vector>
 #include <deque>
+#include <format>
+#include <iostream>
+#include <map>
 #include <optional>
-#include <utility>
 #include <sstream>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 #include "client_state.hpp"
 
 class tcp_listener
 {
 private:
-    int _fd;
+    int fd_;
 
 public:
     tcp_listener(uint16_t port)
     {
-        _fd = socket(AF_INET, SOCK_STREAM, 0);
-        if (_fd == -1)
+        fd_ = socket(AF_INET, SOCK_STREAM, 0);
+        if (fd_ == -1)
         {
-            std::stringstream ss;
-            ss
-                << "failed to create listener socket: "
-                << std::strerror(errno)
-                << std::endl;
-            throw std::runtime_error(ss.str());
+            throw std::runtime_error(
+                std::format(
+                    "failed to create listener socket: {}",
+                    std::strerror(errno)));
         }
 
-        if (fcntl(_fd, F_SETFL, O_NONBLOCK) == -1)
+        auto is_nblk = jetblack::fcntl::set_flag<O_NONBLOCK>(fd_, true);
+        if (!is_nblk)
         {
-            std::stringstream ss;
-            ss
-                << "failed to make listener socket non-blocking: "
-                << std::strerror(errno)
-                << std::endl;
-            throw std::runtime_error(ss.str());
+            throw std::runtime_error(
+                std::format(
+                    "failed to make listener socket non-blocking: {}",
+                    std::strerror(is_nblk.error())));
         }
 
         sockaddr_in servaddr;
@@ -56,53 +50,48 @@ public:
         servaddr.sin_addr.s_addr = htons(INADDR_ANY);
         servaddr.sin_port = htons(port);
 
-        if (bind(_fd, (sockaddr *)&servaddr, sizeof(servaddr)) == -1)
+        if (bind(fd_, (sockaddr *)&servaddr, sizeof(servaddr)) == -1)
         {
-            std::stringstream ss;
-            ss
-                << "failed to bind listener socket to port " << port << ": "
-                << std::strerror(errno)
-                << std::endl;
-            throw std::runtime_error(ss.str());
+            throw std::runtime_error(
+                std::format(
+                    "failed to bind listener socket to port {}: {}",
+                    port,
+                    std::strerror(errno)));
         }
 
-        if (listen(_fd, 10) == -1)
+        if (listen(fd_, 10) == -1)
         {
-            std::stringstream ss;
-            ss
-                << "failed to listen to bound socket: "
-                << std::strerror(errno)
-                << std::endl;
-            throw std::runtime_error(ss.str());
+            throw std::runtime_error(
+                std::format(
+                    "failed to listen to bound socket: {}",
+                    std::strerror(errno)));
         }
     }
 
-    int fd() const { return _fd; }
+    int fd() const { return fd_; }
 
     ClientState accept()
     {
         // New client.
-        int client_fd = ::accept(_fd, (sockaddr *)nullptr, nullptr);
+        int client_fd = ::accept(fd_, (sockaddr *)nullptr, nullptr);
         if (client_fd == -1)
         {
-            std::stringstream ss;
-            ss
-                << "failed to accept client socket: "
-                << std::strerror(errno)
-                << std::endl;
-            throw std::runtime_error(ss.str());
+            throw std::runtime_error(
+                std::format(
+                    "failed to accept client socket: {}",
+                    std::strerror(errno)));
         }
 
         auto client_state = ClientState{client_fd};
 
-        if (!client_state.set_blocking(false))
+        auto is_blk = client_state.set_blocking(false);
+        if (!is_blk)
         {
-            std::stringstream ss;
-            ss
-                << "failed to make client socket non-blocking: "
-                << std::strerror(errno)
-                << std::endl;
-            throw std::runtime_error(ss.str());
+            throw std::runtime_error(
+                std::format(
+                    "failed to make client socket non-blocking: {}",
+                    std::strerror(is_blk.error()))
+            );
         }
 
         return client_state;
@@ -110,7 +99,7 @@ public:
 
 };
 
-int main(int argc, char **argv)
+int main()
 {
     const uint16_t port = 22000;
 
@@ -137,9 +126,10 @@ int main(int argc, char **argv)
             int nactive_fds = poll(fds.data(), fds.size(), -1);
             if (nactive_fds < 0)
             {
-                std::stringstream ss;
-                ss << "failed to poll: " << std::strerror(errno) << std::endl;
-                throw std::runtime_error(ss.str());
+                throw std::runtime_error(
+                    std::format(
+                        "failed to poll: {}",
+                        std::strerror(errno)));
             }
 
             for (auto i = fds.begin(); i != fds.end(); ++i)

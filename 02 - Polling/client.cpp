@@ -11,7 +11,7 @@
 #include <cstring>
 #include <string>
 
-int main(int argc, char **argv)
+int main()
 {
     const uint16_t port = 22000;
 

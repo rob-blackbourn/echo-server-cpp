@@ -11,7 +11,7 @@
 
 int main()
 {
-    int retcode;
+    [[maybe_unused]] int retcode;
 
     char buf[1024];
     retcode = gethostname(buf, sizeof(buf));
@@ -26,7 +26,7 @@ int main()
     std::cout << "release=\"" << (const char *)uname_buf.release << "\"" << std::endl;
     std::cout << "version=\"" << (const char *)uname_buf.version << "\"" << std::endl;
     std::cout << "machine=\"" << (const char *)uname_buf.machine << "\"" << std::endl;
-    std::cout << "domainname=\"" << (const char *)uname_buf.domainname << "\"" << std::endl;
+    // std::cout << "domainname=\"" << (const char *)uname_buf.domainname << "\"" << std::endl;
 
     return 0;
 }

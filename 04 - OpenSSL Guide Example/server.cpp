@@ -26,7 +26,8 @@ static const int server_port = 4433;
 static volatile bool    server_running = true;
 
 #define BUFFERSIZE 1024
-int main(int argc, char **argv)
+
+int main()
 {
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
     signal(SIGPIPE, SIG_IGN);

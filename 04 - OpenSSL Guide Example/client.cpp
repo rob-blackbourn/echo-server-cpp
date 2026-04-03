@@ -10,12 +10,11 @@
 
 static const int server_port = 4433;
 
-int main(int argc, char **argv)
+int main()
 {
     int result;
 
     struct sockaddr_in addr;
-    unsigned int addr_len = sizeof(addr);
 
     /* ignore SIGPIPE so that server can continue running when client pipe closes abruptly */
     signal(SIGPIPE, SIG_IGN);

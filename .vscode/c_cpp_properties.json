@@ -1,9 +1,12 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "MacOS",
+            "includePath": [
+                "/opt/homebrew/include"
+            ],
             "cppStandard": "c++23",
-            "intelliSenseMode": "linux-clang-x64",
+            "intelliSenseMode": "macos-clang-x86",
             "compilerPath": "/usr/bin/clang",
             "compilerArgs": ["-DNULL=0"],
             "cStandard": "c23"

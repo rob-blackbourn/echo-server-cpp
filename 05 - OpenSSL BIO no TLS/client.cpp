@@ -15,7 +15,7 @@
 #include <cstring>
 #include <string>
 
-int main(int argc, char **argv)
+int main()
 {
     const uint16_t port = 22000;
 
@@ -57,12 +57,12 @@ int main(int argc, char **argv)
         std::size_t send_buf_len = message.size() + 1;
         std::cout << "Sending " << send_buf_len << " bytes for \"" << send_buf << "\"" << std::endl;
         size_t nbytes_written;
-        int write_retcode = BIO_write_ex(bio, send_buf, send_buf_len, &nbytes_written);
+        [[maybe_unused]] int write_retcode = BIO_write_ex(bio, send_buf, send_buf_len, &nbytes_written);
 
         char buf[100];
         memset(buf, 0, sizeof(buf));
         size_t nbytes_read;
-        int read_retcode = BIO_read_ex(bio, buf, sizeof(buf), &nbytes_read);
+        [[maybe_unused]] int read_retcode = BIO_read_ex(bio, buf, sizeof(buf), &nbytes_read);
         std::cout << "Received " << (int)nbytes_read << " bytes of \"" << buf << "\"" << std::endl;
     }
 }

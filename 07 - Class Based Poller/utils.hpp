@@ -3,6 +3,7 @@
 
 #include <deque>
 #include <iostream>
+#include <sstream>
 #include <set>
 #include <span>
 #include <vector>

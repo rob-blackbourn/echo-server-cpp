@@ -83,7 +83,7 @@ namespace jetblack::io
       }
     }
 
-    void event_loop(int backlog = 10)
+    void event_loop()
     {
       bool is_ok = true;
 

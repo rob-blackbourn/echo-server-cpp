@@ -1,8 +1,6 @@
 #include <iostream>
 #include <set>
 
-#include <spdlog/spdlog.h>
-
 #include "tcp.hpp"
 #include "poller.hpp"
 #include "tcp_listener_poll_handler.hpp"
@@ -10,36 +8,36 @@
 
 using namespace jetblack::net;
 
-int main(int argc, char** argv)
+int main()
 {
   const uint16_t port = 22000;
 
   try
   {
-    spdlog::info("starting echo server on port {}.", port);
+    std::cout << std::format("starting echo server on port {}.\n", port);
 
     auto poller = Poller(
       [](Poller&, int fd)
       {
-        spdlog::info("on_open: {}", fd);
+        std::cout << std::format("on_open: {}\n", fd);
       },
       [](Poller&, int fd)
       {
-        spdlog::info("on_close: {}", fd);
+        std::cout << std::format("on_close: {}\n", fd);
       },
       [](Poller& poller, int fd, std::vector<std::vector<char>> bufs)
       {
-        spdlog::info("on_read: {}", fd);
+        std::cout << std::format("on_read: {}\n", fd);
 
         for (auto& buf : bufs)
         {
-          spdlog::info("on_read: received {}", to_string(buf));
+          std::cout << std::format("on_read: received {}\n", to_string(buf));
           poller.write(fd, buf);
         }
       },
       [](Poller&, int fd, std::exception error)
       {
-        spdlog::info("on_error: {}, {}", fd, error.what());
+        std::cout << std::format("on_error: {}, {}\n", fd, error.what());
       }
     );
     poller.add_handler(std::make_unique<TcpListenerPollHandler>(port));
@@ -47,7 +45,7 @@ int main(int argc, char** argv)
   }
   catch(const std::exception& error)
   {
-    spdlog::error("Server failed: {}", error.what());
+    std::cerr << std::format("Server failed: {}\n", error.what());
   }
 
   return 0;

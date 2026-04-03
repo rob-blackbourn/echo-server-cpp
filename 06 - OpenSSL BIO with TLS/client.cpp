@@ -15,7 +15,7 @@
 #include <cstring>
 #include <string>
 
-int main(int argc, char **argv)
+int main()
 {
     const char* host_address = "127.0.0.1";
     const char* host_name = "beast.jetblack.net";
